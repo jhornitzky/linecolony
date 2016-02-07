@@ -4,8 +4,8 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "hash": "6acd79e6b01bd4d8fc4648e7e92bca96",
-    "content-hash": "124e3225d060408ba972cae6055701f7",
+    "hash": "71916081a295443cca3f07cf12c7a47f",
+    "content-hash": "f6480f43e506a43bcd12829bb0e63d82",
     "packages": [
         {
             "name": "classpreloader/classpreloader",
@@ -435,6 +435,12 @@
                 "url": "https://github.com/isevltd/Wrike-PHP.git",
                 "reference": "d8d5f071c12daa39ffc5a376edc928c3e0acce5e"
             },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/isevltd/Wrike-PHP/zipball/d8d5f071c12daa39ffc5a376edc928c3e0acce5e",
+                "reference": "d8d5f071c12daa39ffc5a376edc928c3e0acce5e",
+                "shasum": ""
+            },
             "require": {
                 "league/oauth2-client": "1.1.*",
                 "php": ">=5.4.0"
@@ -448,6 +454,7 @@
                     "IsevLtd\\Wrike\\": "src"
                 }
             },
+            "notification-url": "https://packagist.org/downloads/",
             "license": [
                 "MIT"
             ],

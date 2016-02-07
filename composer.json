@@ -18,7 +18,8 @@
     },
     "autoload": {
         "classmap": [
-            "database"
+            "database",
+			"vendor/isevltd/wrike-php/src/"
         ],
         "psr-4": {
             "App\\": "app/"

@@ -11,9 +11,11 @@
 |
 */
 
+/*
 Route::get('/', function () {
     return view('welcome');
 });
+*/
 
 /*
 |--------------------------------------------------------------------------
@@ -27,5 +29,5 @@ Route::get('/', function () {
 */
 
 Route::group(['middleware' => ['web']], function () {
-    //
+	Route::get('/', 'LandingController@index'); //FIXME at some point I should remove the landing page...
 });
