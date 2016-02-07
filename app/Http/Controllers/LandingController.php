@@ -46,7 +46,11 @@ class LandingController extends BaseController
 		  $output = '';
 		  $client = new Wrike( Session::get('wrike_token'), $oauth );
 
-		  trees = [];
+		  //lots of settings
+		  $time = date('d-M-y h:m');
+		  $trees = [];
+		  $teamIds = [];
+		  $folderIds = [];
 
 		  //lets get the folders first
 		  /*
@@ -56,14 +60,29 @@ class LandingController extends BaseController
 		  }
 		  */
 
-		  //lets get the timelogs for the last week
+		  /**
+		  * TIME LOGS
+		  */
+		  $tree = [
+		  	'title' => 'Time by day',
+			'target' => 5.5*8,
+			'leaves' => []
+		  ];
+
 		  $dateFormat = "Y-m-d";
-		  $start = date($dateFormat,strtotime('7 days ago'));
-		  $now = date($dateFormat);
-		  Log::debug($start . ' :: ' . $now);
+		  $niceFormat = "d-M";
+		  $start = date($dateFormat,strtotime('9 days ago'));
+		  $now = date($dateFormat,strtotime('1 day'));
 		  $logs = $client->get_account_timelogs($start, $now);
 
 		  $days = [];
+
+		  for ($i=0;$i<10;$i++) {
+			  //increment the counter
+			  $key = date($dateFormat,strtotime($i.' days ago'));;
+			  $days[$key] = 0;
+		  }
+
 		  foreach ($logs as $log) {
 			  if (array_key_exists($log['trackedDate'], $days))
 			  	$days[$log['trackedDate']] = $days[$log['trackedDate']] + $log['hours'];
@@ -71,14 +90,30 @@ class LandingController extends BaseController
 			  	$days[$log['trackedDate']] = $log['hours'];
 		  }
 
-		  $output = print_r($days, true);
+		  foreach ($days as $key => $value) {
+			  $tree['leaves'][] = [
+				  'key' => date($niceFormat,strtotime($key)),
+				  'value' => round($value)
+		  	  ];
+		  }
+		  $trees[] = $tree;
 
-		  //The output var should be a set of trees
-		  //each tree should have a set of leaves
+		  /**
+		  * RETAINERS
+		  */
+		  $tree = [
+		  	'title' => 'Retainers this month',
+			'leaves' => []
+		  ];
+		  $retainerFolders = [
+			  ['title'=>'RSPCA NSW', 'id'=>'24346730', 'target'=>28]
+		  ];
 
+		  foreach ($retainerFolders as $key => $folder) {
 
+		  }
 
-		  return view('welcome', ['output' => $output]);
+		  return view('welcome', ['trees' => $trees, 'time' => $time]);
 		}
 	}
 
