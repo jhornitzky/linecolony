@@ -76,8 +76,9 @@ class LandingController extends BaseController
 		  $logs = $client->get_account_timelogs($start, $now);
 
 		  $days = [];
-
-		  for ($i=0;$i<10;$i++) {
+		  $key = date($dateFormat);
+		  $days[$key] = 0;
+		  for ($i=0;$i<9;$i++) {
 			  //increment the counter
 			  $key = date($dateFormat,strtotime($i.' days ago'));;
 			  $days[$key] = 0;
