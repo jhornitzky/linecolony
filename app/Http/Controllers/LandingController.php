@@ -41,13 +41,16 @@ class LandingController extends BaseController
 		  return redirect('/');
 		}
 		else {
+			//FIXME just a hack for now
+			date_default_timezone_set('Australia/Sydney');
+
 		  // Test an API call
 		  Log::debug('making API call');
 		  $output = '';
 		  $client = new Wrike( Session::get('wrike_token'), $oauth );
 
 		  //lots of settings
-		  $time = date('d-M-y h:m');
+		  $time = date('d-M-y H:i');
 		  $trees = [];
 		  $teamIds = [];
 		  $folderIds = [];
