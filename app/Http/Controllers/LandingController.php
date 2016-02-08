@@ -71,8 +71,8 @@ class LandingController extends BaseController
 
 		  $dateFormat = "Y-m-d";
 		  $niceFormat = "d-M";
-		  $start = date($dateFormat,strtotime('10 days ago'));
-		  $now = date($dateFormat);
+		  $start = date($dateFormat,strtotime('-10 days'));
+		  $now = date($dateFormat,strtotime('+1 day'));
 		  $logs = $client->get_account_timelogs($start, $now);
 
 		  $days = [];
@@ -129,7 +129,7 @@ class LandingController extends BaseController
 
 		  $retainerFolders = [
 			  ['title'=>'RSPCA NSW', 'id'=>'IEAAFWIKI4AXHADK', 'target'=>28],
-			  ['title'=>'AstraZeneca', 'id'=>'IEAAFWIKI4AXHADK'],
+			  ['title'=>'AstraZeneca', 'id'=>'IEAAFWIKI4BLFAGV'],
 			  //['title'=>'Canteen', 'id'=>'IEAAFWIKI4AXHADK'],
 			  //['title'=>'Cerebral Palsy Alliance', 'id'=>'IEAAFWIKI4AXHADK']
 		  ];
@@ -162,7 +162,7 @@ class LandingController extends BaseController
 		  $trees[] = $tree;
 
 		  /**
-		  * 
+		  *
 		  */
 
 		  return view('welcome', ['trees' => $trees, 'time' => $time]);
