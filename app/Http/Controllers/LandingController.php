@@ -64,8 +64,8 @@ class LandingController extends BaseController
 		  * TIME LOGS
 		  */
 		  $tree = [
-		  	'title' => 'Time by day',
-			'target' => 5.5*8,
+		  	'titleKey' => 'Time by day',
+			'titleValue' => 5.5*8,
 			'leaves' => []
 		  ];
 
@@ -92,11 +92,29 @@ class LandingController extends BaseController
 		  }
 
 		  foreach ($days as $key => $value) {
+			  $css = '';
+			  if ($value < $tree['titleValue']*0.5)
+			  	$css = 'red';
+			  else if ($value > $tree['titleValue']*0.5 && $value < $tree['titleValue'])
+			    $css = 'amber';
+			  else
+  			  	$css = 'green';
 			  $tree['leaves'][] = [
 				  'key' => date($niceFormat,strtotime($key)),
-				  'value' => round($value)
+				  'value' => round($value),
+				  'css' => $css
 		  	  ];
 		  }
+
+		  $count = 0;
+		  $sum = 0;
+		  foreach ($days as $key => $value) {
+			  $count++;
+			  $sum += $value;
+		  }
+		  $tree['outcomeKey'] = 'Average';
+		  $tree['outcomeValue'] = round($sum/$count);
+
 		  $trees[] = $tree;
 
 		  /**

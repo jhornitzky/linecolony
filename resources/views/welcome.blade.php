@@ -11,6 +11,31 @@
 		<!-- Latest compiled and minified JavaScript -->
 		<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js" integrity="sha384-0mSbJDEHialfmuBBQP6A4Qrprq5OVfW37PRR3j5ELqxss1yVqOtnepnHVP9aJ7xS" crossorigin="anonymous"></script>
         <style>
+
+		.color-primary-0 { color: #AA3939 }	/* Main Primary color */
+.color-primary-1 { color: #FFAAAA }
+.color-primary-2 { color: #D46A6A }
+.color-primary-3 { color: #801515 }
+.color-primary-4 { color: #550000 }
+
+.color-secondary-1-0 { color: #AA6C39 }	/* Main Secondary color (1) */
+.color-secondary-1-1 { color: #FFD1AA }
+.color-secondary-1-2 { color: #D49A6A }
+.color-secondary-1-3 { color: #804515 }
+.color-secondary-1-4 { color: #552700 }
+
+.color-secondary-2-0 { color: #226666 }	/* Main Secondary color (2) */
+.color-secondary-2-1 { color: #669999 }
+.color-secondary-2-2 { color: #407F7F }
+.color-secondary-2-3 { color: #0D4D4D }
+.color-secondary-2-4 { color: #003333 }
+
+.color-complement-0 { color: #2D882D }	/* Main Complement color */
+.color-complement-1 { color: #88CC88 }
+.color-complement-2 { color: #55AA55 }
+.color-complement-3 { color: #116611 }
+.color-complement-4 { color: #004400 }
+
             html, body {
                 height: 100%;
 				font-size: 14px;
@@ -46,8 +71,24 @@
 				border-bottom:1px solid #DDD;
 			}
             .leaf {
+				padding-top: 1rem;
                 font-size: 1rem;
 				font-weight:500;
+            }
+			.leaf.green {
+				background-color:#55AA55;
+				color:#FFF;
+			}
+			.leaf.amber {
+				background-color:#D49A6A;
+				color:#FFF;
+			}
+			.leaf.red {
+				background-color:#D46A6A;
+				color:#FFF;
+			}
+			.leaf .key {
+                margin-bottom:0;
             }
 			.leaf .value {
                 font-size: 3rem;
@@ -67,15 +108,19 @@
 					@foreach ($trees as $tree)
 					<div class="tree row">
 						<div class="leaf title col-xs-1">
-							<p class="key">{{ $tree['title'] }}</p>
-							<p class="value"></p>
+							<p class="key">{{ $tree['titleKey'] }}</p>
+							<p class="value">{{ $tree['titleValue'] }}</p>
 						</div>
 						@foreach ($tree['leaves'] as $leaf)
-						<div class="leaf col-xs-1">
+						<div class="leaf col-xs-1 {{ $leaf['css'] }}">
 							<p class="key">{{ $leaf['key'] }}</p>
 							<p class="value">{{ $leaf['value'] }}</p>
 						</div>
 						@endforeach
+						<div class="leaf title col-xs-1">
+							<p class="key">{{ $tree['outcomeKey'] }}</p>
+							<p class="value">{{ $tree['outcomeValue'] }}</p>
+						</div>
 					</div>
 					@endforeach
 				</div>
