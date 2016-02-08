@@ -53,12 +53,11 @@ class LandingController extends BaseController
 		  $folderIds = [];
 
 		  //lets get the folders first
-		  /*
 		  $folderTree = $client->get_folder_tree();
 		  foreach($folderTree as $folder) {
-			  $output .= $folder['title'] . '<br>';
+			  Log::debug($folder['id'] . ' :: ' . $folder['title']);
+			  //$output .= $folder['title'] . $folder['title'];
 		  }
-		  */
 
 		  /**
 		  * TIME LOGS
@@ -66,13 +65,14 @@ class LandingController extends BaseController
 		  $tree = [
 		  	'titleKey' => 'Time by day',
 			'titleValue' => 5.5*8,
-			'leaves' => []
+			'leaves' => [],
+			'css' => 'col-xs-1'
 		  ];
 
 		  $dateFormat = "Y-m-d";
 		  $niceFormat = "d-M";
-		  $start = date($dateFormat,strtotime('9 days ago'));
-		  $now = date($dateFormat,strtotime('1 day'));
+		  $start = date($dateFormat,strtotime('10 days ago'));
+		  $now = date($dateFormat);
 		  $logs = $client->get_account_timelogs($start, $now);
 
 		  $days = [];
@@ -80,7 +80,7 @@ class LandingController extends BaseController
 		  $days[$key] = 0;
 		  for ($i=0;$i<9;$i++) {
 			  //increment the counter
-			  $key = date($dateFormat,strtotime($i.' days ago'));;
+			  $key = date($dateFormat,strtotime($i.' days ago'));
 			  $days[$key] = 0;
 		  }
 
@@ -121,16 +121,49 @@ class LandingController extends BaseController
 		  * RETAINERS
 		  */
 		  $tree = [
-		  	'title' => 'Retainers this month',
-			'leaves' => []
+		  	'titleKey' => 'Retainers this month',
+			'titleValue' => '',
+			'leaves' => [],
+			'css' => 'col-xs-2'
 		  ];
+
 		  $retainerFolders = [
-			  ['title'=>'RSPCA NSW', 'id'=>'24346730', 'target'=>28]
+			  ['title'=>'RSPCA NSW', 'id'=>'IEAAFWIKI4AXHADK', 'target'=>28],
+			  ['title'=>'AstraZeneca', 'id'=>'IEAAFWIKI4AXHADK'],
+			  //['title'=>'Canteen', 'id'=>'IEAAFWIKI4AXHADK'],
+			  //['title'=>'Cerebral Palsy Alliance', 'id'=>'IEAAFWIKI4AXHADK']
 		  ];
 
+		  $start = date('Y-m-01'); // hard-coded '01' for first day
+		  $end = date('Y-m-t');
 		  foreach ($retainerFolders as $key => $folder) {
+			  $logs = $client->get_folder_timelogs($folder['id'],$start,$end);
+			  $total = 0;
+			  foreach ($logs as $log) {
+				  $total += $log['hours'];
+			  }
+			  $css = '';
+			  if (isset($folder['target']) && $total < $folder['target']*0.5)
+			   $css = 'red';
+			  else if (isset($folder['target']) && $total > $folder['target']*0.5 && $total < $folder['target'])
+			   $css = 'amber';
+			  else if (isset($folder['target']))
+			   $css = 'green';
 
+			  $tree['leaves'][] = [
+				  'key'=> $folder['title'],
+				  'value'=> round($total),
+				  'css' => $css
+			  ];
 		  }
+
+		  $tree['outcomeKey'] = '';
+		  $tree['outcomeValue'] = '';
+		  $trees[] = $tree;
+
+		  /**
+		  * 
+		  */
 
 		  return view('welcome', ['trees' => $trees, 'time' => $time]);
 		}

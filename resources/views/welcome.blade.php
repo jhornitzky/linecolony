@@ -65,10 +65,16 @@
                 font-size: 4rem;
             }
 
+			.controls {
+				padding-top: 1rem;
+                font-size: 1rem;
+				font-weight:500;
+			}
+
 			.tree {
 				margin-top:1rem;
 				margin-bottom:1rem;
-				border-bottom:1px solid #DDD;
+				border-bottom:1px solid #333; /*#DDD*/
 			}
             .leaf {
 				padding-top: 1rem;
@@ -112,12 +118,12 @@
 							<p class="value">{{ $tree['titleValue'] }}</p>
 						</div>
 						@foreach ($tree['leaves'] as $leaf)
-						<div class="leaf col-xs-1 {{ $leaf['css'] }}">
+						<div class="leaf {{ $tree['css'] }} {{ $leaf['css'] }}">
 							<p class="key">{{ $leaf['key'] }}</p>
 							<p class="value">{{ $leaf['value'] }}</p>
 						</div>
 						@endforeach
-						<div class="leaf title col-xs-1">
+						<div class="leaf outcome col-xs-1">
 							<p class="key">{{ $tree['outcomeKey'] }}</p>
 							<p class="value">{{ $tree['outcomeValue'] }}</p>
 						</div>
