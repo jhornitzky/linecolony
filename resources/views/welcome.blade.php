@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <title>Laravel</title>
+        <title>linecolony</title>
 
 		<meta http-equiv="refresh" content="900">
-		
+
         <link href="https://fonts.googleapis.com/css?family=Lato:100,300,500,700,900" rel="stylesheet" type="text/css">
 		<!-- Latest compiled and minified CSS -->
 		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
@@ -83,6 +83,7 @@
 				padding-top: 1rem;
                 font-size: 1rem;
 				font-weight:500;
+				min-height:104px;
             }
 			.leaf.green {
 				background-color:#55AA55;
@@ -95,6 +96,13 @@
 			.leaf.red {
 				background-color:#D46A6A;
 				color:#FFF;
+			}
+			.leaf.grey {
+				background-color:#AAAAAA;
+				color:#FFF;
+			}
+			.leaf.title .key {
+				font-weight:700;
 			}
 			.leaf .key {
                 margin-bottom:0;

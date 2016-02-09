@@ -49,26 +49,18 @@ class LandingController extends BaseController
 		  //lots of settings
 		  $time = date('d-M-y H:i');
 		  $trees = [];
-		  $teamIds = [];
-		  $folderIds = [];
-
-		  //lets get the folders first
-		  $folderTree = $client->get_folder_tree();
-		  foreach($folderTree as $folder) {
-			  Log::debug($folder['id'] . ' :: ' . $folder['title']);
-			  //$output .= $folder['title'] . $folder['title'];
-		  }
 
 		  /**
 		  * TIME LOGS
 		  */
 		  $tree = [
-		  	'titleKey' => 'Time by day',
-			'titleValue' => 5.5*8,
+		  	'titleKey' => 'Team hours by day',
+			'titleValue' => '',
 			'leaves' => [],
 			'css' => 'col-xs-1'
 		  ];
 
+		  $target = 5.5*8;
 		  $dateFormat = "Y-m-d";
 		  $niceFormat = "d-M";
 		  $start = date($dateFormat,strtotime('-10 days'));
@@ -93,9 +85,9 @@ class LandingController extends BaseController
 
 		  foreach ($days as $key => $value) {
 			  $css = '';
-			  if ($value < $tree['titleValue']*0.5)
+			  if ($value < $target*0.5)
 			  	$css = 'red';
-			  else if ($value > $tree['titleValue']*0.5 && $value < $tree['titleValue'])
+			  else if ($value > $target*0.5 && $value < $target)
 			    $css = 'amber';
 			  else
   			  	$css = 'green';
@@ -121,7 +113,7 @@ class LandingController extends BaseController
 		  * RETAINERS
 		  */
 		  $tree = [
-		  	'titleKey' => 'Retainers this month',
+		  	'titleKey' => 'Retainer hours this month',
 			'titleValue' => '',
 			'leaves' => [],
 			'css' => 'col-xs-2'
@@ -130,8 +122,8 @@ class LandingController extends BaseController
 		  $retainerFolders = [
 			  ['title'=>'RSPCA NSW', 'id'=>'IEAAFWIKI4AXHADK', 'target'=>28],
 			  ['title'=>'AstraZeneca', 'id'=>'IEAAFWIKI4BLFAGV'],
-			  //['title'=>'Canteen', 'id'=>'IEAAFWIKI4AXHADK'],
-			  //['title'=>'Cerebral Palsy Alliance', 'id'=>'IEAAFWIKI4AXHADK']
+			  ['title'=>'Canteen', 'id'=>'IEAAFWIKI4CEQZRF'],
+			  ['title'=>'Cerebral Palsy Alliance', 'id'=>'IEAAFWIKI4CALKDE']
 		  ];
 
 		  $start = date('Y-m-01'); // hard-coded '01' for first day
@@ -162,8 +154,46 @@ class LandingController extends BaseController
 		  $trees[] = $tree;
 
 		  /**
-		  *
+		  * PROJECT STATUS
 		  */
+
+		  $tree = [
+		  	'titleKey' => 'Project Status',
+			'titleValue' => '',
+			'leaves' => [],
+			'css' => 'col-xs-1'
+		  ];
+
+		  //loop through folders for non-completed projects
+		  $folderTree = $client->get_folder_tree();
+		  foreach($folderTree as $folder) {
+			  //Log::debug($folder['id'] . ' :: ' . $folder['title']);
+
+			  if (array_key_exists('project', $folder) &&
+			  	$folder['project']['status'] != 'Completed' &&
+			  	$folder['project']['status'] != 'Cancelled') {
+				  Log::debug($folder['project']['status'] . ' :: ' . $folder['id'] . ' :: ' . $folder['title']);
+				  $css = '';
+	  			  if ($folder['project']['status'] == 'Red')
+	  			   $css = 'red';
+	  			  else if ($folder['project']['status'] == 'Amber')
+	  			   $css = 'amber';
+	  			  else if ($folder['project']['status'] == 'Green')
+	  			   $css = 'green';
+				  else if ($folder['project']['status'] == 'OnHold')
+ 	  			   $css = 'grey';
+
+	  			  $tree['leaves'][] = [
+	  				  'key'=> $folder['title'],
+	  				  'value'=> '',
+	  				  'css' => $css
+	  			  ];
+			  }
+		  }
+
+		  $tree['outcomeKey'] = '';
+		  $tree['outcomeValue'] = '';
+		  $trees[] = $tree;
 
 		  return view('welcome', ['trees' => $trees, 'time' => $time]);
 		}
