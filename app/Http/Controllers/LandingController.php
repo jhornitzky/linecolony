@@ -171,12 +171,13 @@ class LandingController extends BaseController
 
 			  if (array_key_exists('project', $folder) &&
 			  	$folder['project']['status'] != 'Completed' &&
-			  	$folder['project']['status'] != 'Cancelled') {
+			  	$folder['project']['status'] != 'Cancelled' &&
+				$folder['project']['status'] != 'OnHold') {
 				  Log::debug($folder['project']['status'] . ' :: ' . $folder['id'] . ' :: ' . $folder['title']);
 				  $css = '';
 	  			  if ($folder['project']['status'] == 'Red')
 	  			   $css = 'red';
-	  			  else if ($folder['project']['status'] == 'Amber')
+	  			  else if ($folder['project']['status'] == 'Yellow')
 	  			   $css = 'amber';
 	  			  else if ($folder['project']['status'] == 'Green')
 	  			   $css = 'green';
