@@ -22,10 +22,10 @@ class LandingController extends BaseController
 
 	public function index( Request $request ) {
 		$oauth = new WrikeProvider([
-			//Line Colony - Laravel
-		  'clientId'     => 'DgGgRmQA',
-		  'clientSecret' => 'k60bGX05h4WO2nR1AKop9GUdTGZCG7jA9y7ha2KT7ykAJxV8n3i7d7Oq2AIroTaF',
-		  'redirectUri'  => 'http://localhost:8000'
+			//localhost - Line Colony - Laravel
+		  'clientId'     => env('WRIKE_CLIENT_ID'),
+		  'clientSecret' => env('WRIKE_CLIENT_SECRET'),
+		  'redirectUri'  => env('WRIKE_CLIENT_REDIRECT_URI')
 		]);
 
 		if ( !Session::has('wrike_token') || !Session::get('wrike_token') instanceof AccessToken ) {
