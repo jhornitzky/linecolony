@@ -47,7 +47,7 @@ class LandingController extends BaseController
 		  $client = new Wrike( Session::get('wrike_token'), $oauth );
 
 		  //lots of settings
-		  $time = date('d-M-y H:i');
+		  $time = date('d-M H:i');
 		  $trees = [];
 
 		  /**
@@ -63,7 +63,7 @@ class LandingController extends BaseController
 		  $target = 5.5*8;
 		  $dateFormat = "Y-m-d";
 		  $niceFormat = "d-M";
-		  $start = date($dateFormat,strtotime('-10 days'));
+		  $start = date($dateFormat,strtotime('-9 days'));
 		  $now = date($dateFormat,strtotime('+1 day'));
 		  $logs = $client->get_account_timelogs($start, $now);
 

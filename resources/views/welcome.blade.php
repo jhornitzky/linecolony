@@ -68,12 +68,6 @@
                 font-size: 4rem;
             }
 
-			.controls {
-				padding-top: 1rem;
-                font-size: 1rem;
-				font-weight:500;
-			}
-
 			.tree {
 				margin-top:1rem;
 				margin-bottom:1rem;
@@ -82,7 +76,7 @@
             .leaf {
 				padding-top: 1rem;
                 font-size: 1rem;
-				font-weight:500;
+				font-weight:700;
 				min-height:104px;
             }
 			.leaf.green {
@@ -101,26 +95,50 @@
 				background-color:#AAAAAA;
 				color:#FFF;
 			}
-			.leaf.title .key {
-				font-weight:700;
-			}
 			.leaf .key {
                 margin-bottom:0;
             }
 			.leaf .value {
                 font-size: 3rem;
-				font-weight:300;
             }
+
+			header h1 {
+				padding:0 !important;
+				margin:0 !important;
+			}
+			header h1 img {
+				height:60px;
+			}
+			header {
+				font-weight:700;
+			}
+			header .search, header .updated {
+				background-color:#EEE;
+			}
+			header .search {
+				line-height:60px;
+			}
+			header .updated span, header .updated a {
+				line-height:17.333333px;
+			}
         </style>
     </head>
     <body>
         <div class="container">
-            <div class="content">
-                <div class="page-title">linecolony</div>
-				<div class="controls">
-					<span class="time">As at {{ $time }}</span><br>
-					<a href="/">Reload</a>
+			<header class="container-fluid">
+				<div class="row">
+					<div class="col-xs-1 search">
+						<span>#production</span>
+					</div>
+					<div class="col-xs-10 page-title">
+						<h1><img src="images/logo.jpg" alt="linecolony"></h1>
+					</div>
+					<div class="col-xs-1 updated">
+						<span class="time">Updated<br>{{ $time }}</span><br><a href="/">Reload</a>
+					</div>
 				</div>
+			</header>
+            <div class="content">
 				<div class="trees container-fluid">
 					@foreach ($trees as $tree)
 					<div class="tree row">
