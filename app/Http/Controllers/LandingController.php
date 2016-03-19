@@ -158,10 +158,65 @@ class LandingController extends BaseController
 				  unset($tree['leaves'][$key]);
 		  }
 
-
 		  $tree['outcomeKey'] = '';
 		  $tree['outcomeValue'] = '';
 		  $trees[] = $tree;
+
+
+
+		  /**
+		  * Due & Overdue tasks by user
+		  */
+		  $tree = [
+		   'titleKey' => 'Due & overdue tasks per user',
+		   'titleValue' => '',
+		   'leaves' => [],
+		   'css' => 'col-xs-2'
+		 ];
+
+		  //get the team users first //FIXME i already got these with the last metrics
+		  //$contacts = $client->get_contacts();
+		  //$allowedContacts = [];
+
+		  //lets loop through the contacts into the tree
+		  foreach($contacts as $contact) {
+			  if (!$contact['deleted']) {
+				  $tree['leaves'][$contact['id']] = [
+					  'key'=> $contact['firstName'] . ' ' . $contact['lastName'],
+					  'value'=> 0,
+		  			  'css' => 'col-xs-2'
+				  ];
+			  }
+	  	  }
+
+		  //now lets grab tasks
+		  $dateFormat = "Y-m-d";
+		  $end = date($dateFormat,strtotime('today'));
+		  $fields = ['responsibleIds'];
+		  $tasks = $client->get_tasks('Active', $end, $fields);
+
+		  //now lets loop through the tasks and add these the user object
+		  foreach ($tasks as $task) {
+			  Log::debug($task);
+			  if (array_key_exists('responsibleIds',$task) ) {
+				  foreach ($task['responsibleIds'] as $responsibleId) {
+					  if (array_key_exists($responsibleId, $tree['leaves']))
+					  	$tree['leaves'][$responsibleId]['value']++; //TODO add some coloring here...
+					  else
+					  	Log::error('Task for non existent user id : ' . $responsibleId);
+				  }
+		  	  }
+		  }
+
+  		  //prune the zeros, and optionally add some styling one day
+  		  foreach ($tree['leaves'] as $key => $leaf) {
+  			  if ($leaf['value'] == 0)
+  				  unset($tree['leaves'][$key]);
+  		  }
+
+  		  $tree['outcomeKey'] = '';
+  		  $tree['outcomeValue'] = '';
+  		  $trees[] = $tree;
 
 
 		  /**
