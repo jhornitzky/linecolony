@@ -52,7 +52,7 @@ class LandingController extends BaseController
 
 		  /**
 		  * TIME LOGS
-		  */
+
 		  $tree = [
 		  	'titleKey' => 'Team hours by day',
 			'titleValue' => '',
@@ -78,7 +78,7 @@ class LandingController extends BaseController
 
 		  foreach ($logs as $log) {
 			  if (array_key_exists($log['trackedDate'], $days))
-			  	$days[$log['trackedDate']] = $days[$log['trackedDate']] + $log['hours'];
+			  	$days[$log['trackedDate']] += $log['hours'];
 			  else
 			  	$days[$log['trackedDate']] = $log['hours'];
 		  }
@@ -108,6 +108,61 @@ class LandingController extends BaseController
 		  $tree['outcomeValue'] = round($sum/$count);
 
 		  $trees[] = $tree;
+		  */
+
+
+		  /**
+		  * TEAM MEMBER TIME PER WEEK
+		  */
+		  $tree = [
+		   'titleKey' => 'Hours per user this week',
+		   'titleValue' => '',
+		   'leaves' => [],
+		   'css' => 'col-xs-2'
+		 ];
+
+		  //get the team users first
+		  $contacts = $client->get_contacts();
+		  $allowedContacts = [];
+
+		  //lets loop through the contacts into the tree
+		  foreach($contacts as $contact) {
+			  if (!$contact['deleted']) {
+				  $tree['leaves'][$contact['id']] = [
+					  'key'=> $contact['firstName'] . ' ' . $contact['lastName'],
+					  'value'=> 0,
+		  			  'css' => 'col-xs-2'
+				  ];
+			  }
+	  	  }
+
+		  //now lets get the time this week
+		  $target = 5*8;
+		  $dateFormat = "Y-m-d";
+		  $niceFormat = "d-M";
+		  $start = date($dateFormat,strtotime('last monday', strtotime('tomorrow')));
+		  $now = date($dateFormat,strtotime('+1 day'));
+		  $logs = $client->get_account_timelogs($start, $now);
+
+		  //now lets loop through the time logs and add these to the tree
+		  foreach ($logs as $log) {
+			  if (array_key_exists($log['userId'], $tree['leaves']))
+			  	$tree['leaves'][$log['userId']]['value'] = round($tree['leaves'][$log['userId']]['value'] + $log['hours']);
+			  else
+			  	Log::error('Time log for non existent user id : ' . $log['userId']);
+		  }
+
+		  //prune the zeros, and optionally add some styling one day
+		  foreach ($tree['leaves'] as $key => $leaf) {
+			  if ($leaf['value'] == 0)
+				  unset($tree['leaves'][$key]);
+		  }
+
+
+		  $tree['outcomeKey'] = '';
+		  $tree['outcomeValue'] = '';
+		  $trees[] = $tree;
+
 
 		  /**
 		  * RETAINERS
@@ -153,10 +208,10 @@ class LandingController extends BaseController
 		  $tree['outcomeValue'] = '';
 		  $trees[] = $tree;
 
+
 		  /**
 		  * PROJECT STATUS
 		  */
-
 		  $tree = [
 		  	'titleKey' => 'Project Status',
 			'titleValue' => '',
