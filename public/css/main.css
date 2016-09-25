@@ -86,6 +86,7 @@ html,
 body {
 	height: 100%;
 	font-size: 14px;
+	background-color: rgb(51,52,51);
 }
 
 body {
@@ -100,7 +101,6 @@ body {
 .content {
 	text-align: center;
 	display: block;
-	background-color: rgb(51,52,51);
 	padding: 2rem;
 }
 
@@ -157,6 +157,10 @@ body {
 	margin-bottom:0;
 }
 
+header {
+	font-weight: 700;
+	background-color:#FFF;
+}
 header h1 {
 	padding: 0 !important;
 	margin: 0 !important;
@@ -166,10 +170,6 @@ header h1 img {
 	height: 60px;
 }
 
-header {
-	font-weight: 700;
-}
-
 header .search {
 	line-height: 60px;
 }
@@ -177,4 +177,8 @@ header .search {
 header .updated span,
 header .updated a {
 	line-height: 60px;
+}
+
+.loggedout {
+	color:#FFF;
 }

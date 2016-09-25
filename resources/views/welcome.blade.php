@@ -13,10 +13,10 @@
         <div class="wrapper">
 			<header class="container-fluid">
 				<div class="row">
-					<div class="col-xs-6 page-title text-left">
+					<div class="col-md-6 page-title text-left">
 						<h1><img src="images/logo.jpg" alt="linecolony"></h1>
 					</div>
-					<div class="col-xs-6 updated text-right">
+					<div class="col-md-6 updated text-right">
 						<a href="/">Reload</a> | <span class="time">Updated {{ $time }}</span> | <a href="logout">Logout</a>
 					</div>
 				</div>

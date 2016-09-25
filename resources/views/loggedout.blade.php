@@ -10,17 +10,21 @@
 		<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js" integrity="sha384-0mSbJDEHialfmuBBQP6A4Qrprq5OVfW37PRR3j5ELqxss1yVqOtnepnHVP9aJ7xS" crossorigin="anonymous"></script>
     </head>
     <body>
-        <div class="container">
+		<div class="wrapper">
 			<header class="container-fluid">
 				<div class="row">
-					<div class="col-xs-6 page-title">
+					<div class="col-xs-6 page-title text-left">
 						<h1><img src="images/logo.jpg" alt="linecolony"></h1>
+					</div>
+					<div class="col-md-6 updated text-right">
+						<a href="/">Login again</a>
 					</div>
 				</div>
 			</header>
-        </div>
-		<div class="content">
-			<h1>Logged out successfully!</h1>
-        </div>
+			<div class="content loggedout">
+				<h1>Have a great day!</h1>
+				<p>You have been successfully logged out.</p>
+	        </div>
+		</div>
     </body>
 </html>
