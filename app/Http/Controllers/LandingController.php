@@ -118,7 +118,7 @@ class LandingController extends BaseController
 		   'titleKey' => 'Hours per user this week',
 		   'titleValue' => '',
 		   'leaves' => [],
-		   'css' => 'col-xs-2'
+		   'css' => 'col-xs-1'
 		 ];
 
 		  //get the team users first
@@ -129,7 +129,7 @@ class LandingController extends BaseController
 		  foreach($contacts as $contact) {
 			  if (!$contact['deleted']) {
 				  $tree['leaves'][$contact['id']] = [
-					  'key'=> $contact['firstName'] . ' ' . $contact['lastName'],
+					  'key'=> substr($contact['firstName'],0,1) . substr($contact['lastName'],0,1),
 					  'value'=> 0,
 		  			  'css' => 'col-xs-2'
 				  ];
@@ -182,9 +182,9 @@ class LandingController extends BaseController
 		  foreach($contacts as $contact) {
 			  if (!$contact['deleted']) {
 				  $tree['leaves'][$contact['id']] = [
-					  'key'=> $contact['firstName'] . ' ' . $contact['lastName'],
+					  'key'=> substr($contact['firstName'],0,1) . substr($contact['lastName'],0,1),
 					  'value'=> 0,
-		  			  'css' => 'col-xs-2'
+		  			  'css' => 'col-xs-1'
 				  ];
 			  }
 	  	  }
@@ -218,6 +218,61 @@ class LandingController extends BaseController
   		  $tree['outcomeValue'] = '';
   		  $trees[] = $tree;
 
+		  /**
+		  * Completed tasks by user
+		  */
+		  $tree = [
+		   'titleKey' => 'Completed tasks per user this week',
+		   'titleValue' => '',
+		   'leaves' => [],
+		   'css' => 'col-xs-1'
+		 ];
+
+		  //get the team users first //FIXME i already got these with the last metrics
+		  //$contacts = $client->get_contacts();
+		  //$allowedContacts = [];
+
+		  //lets loop through the contacts into the tree
+		  foreach($contacts as $contact) {
+			  if (!$contact['deleted']) {
+				  $tree['leaves'][$contact['id']] = [
+					  'key'=> substr($contact['firstName'],0,1) . substr($contact['lastName'],0,1),
+					  'value'=> 0,
+		  			  'css' => 'col-xs-1'
+				  ];
+			  }
+	  	  }
+
+		  //now lets grab tasks
+		  $dateFormat = "Y-m-d";
+		  $start = date($dateFormat,strtotime('last monday', strtotime('tomorrow')));
+		  $end = date($dateFormat,strtotime('tomorrow'));
+		  $fields = ['responsibleIds'];
+		  $tasks = $client->get_completed_tasks('Completed', $start, $end, $fields);
+
+		  //now lets loop through the tasks and add these the user object
+		  foreach ($tasks as $task) {
+			  Log::debug($task);
+			  if (array_key_exists('responsibleIds',$task) ) {
+				  foreach ($task['responsibleIds'] as $responsibleId) {
+					  if (array_key_exists($responsibleId, $tree['leaves']))
+					  	$tree['leaves'][$responsibleId]['value']++; //TODO add some coloring here...
+					  else
+					  	Log::error('Task for non existent user id : ' . $responsibleId);
+				  }
+		  	  }
+		  }
+
+  		  //prune the zeros, and optionally add some styling one day
+  		  foreach ($tree['leaves'] as $key => $leaf) {
+  			  if ($leaf['value'] == 0)
+  				  unset($tree['leaves'][$key]);
+  		  }
+
+  		  $tree['outcomeKey'] = '';
+  		  $tree['outcomeValue'] = '';
+  		  $trees[] = $tree;
+
 
 		  /**
 		  * RETAINERS
@@ -226,11 +281,11 @@ class LandingController extends BaseController
 		  	'titleKey' => 'Retainer hours this month',
 			'titleValue' => '',
 			'leaves' => [],
-			'css' => 'col-xs-2'
+			'css' => 'col-xs-1'
 		  ];
 
 		  $retainerFolders = [
-			  ['title'=>'RSPCA NSW', 'id'=>'IEAAFWIKI4AXHADK', 'target'=>28],
+			  ['title'=>'RSPCA NSW', 'id'=>'IEAAFWIKI4AXHADK'],
 			  ['title'=>'AstraZeneca', 'id'=>'IEAAFWIKI4BLFAGV'],
 			  ['title'=>'Canteen', 'id'=>'IEAAFWIKI4CEQZRF'],
 			  ['title'=>'Cerebral Palsy Alliance', 'id'=>'IEAAFWIKI4CALKDE']

@@ -146,16 +146,24 @@
 							<p class="key">{{ $tree['titleKey'] }}</p>
 							<p class="value">{{ $tree['titleValue'] }}</p>
 						</div>
-						@foreach ($tree['leaves'] as $leaf)
-						<div class="leaf {{ $tree['css'] }} {{ $leaf['css'] }}">
-							<p class="key">{{ $leaf['key'] }}</p>
-							<p class="value">{{ $leaf['value'] }}</p>
+						<div class="col-xs-11">
+							<div class="row">
+								@foreach ($tree['leaves'] as $leaf)
+								<div class="leaf {{ $tree['css'] }} {{ $leaf['css'] }}">
+									<p class="key">{{ $leaf['key'] }}</p>
+									<p class="value">{{ $leaf['value'] }}</p>
+								</div>
+								@endforeach
+							</div>
 						</div>
-						@endforeach
+					<!--
+						@if (!empty($tree['outcomeKey']))
 						<div class="leaf outcome col-xs-1">
 							<p class="key">{{ $tree['outcomeKey'] }}</p>
 							<p class="value">{{ $tree['outcomeValue'] }}</p>
 						</div>
+						@endif
+					-->
 					</div>
 					@endforeach
 				</div>
