@@ -118,10 +118,10 @@ body {
 	padding:1rem;
 	font-size: 1rem;
 	border: 1px solid rgb(51,52,51);
-	background-color: rgb(201,201,200);
+	background-color: rgb(231,231,230);
 }
 .leaf.title {
-	background-color: rgb(231,231,230);
+	background-color: #FFFFFF;
 }
 .leaf.green {
 	background-color: #55AA55;
