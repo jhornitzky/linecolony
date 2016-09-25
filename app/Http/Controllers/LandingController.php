@@ -230,8 +230,8 @@ class LandingController extends BaseController
 		  ];
 
 		  $retainerFolders = [
-			  ['title'=>'RSPCA NSW', 'id'=>'IEAAFWIKI4AXHADK', 'target'=>28],
-			  ['title'=>'AstraZeneca', 'id'=>'IEAAFWIKI4BLFAGV'],
+			  ['title'=>'RSPCA NSW', 'id'=>'IEAAFWIKI4C7D5JM', 'target'=>28],
+			  ['title'=>'AstraZeneca', 'id'=>'IEAAFWIKI4CRFLND'],
 			  ['title'=>'Canteen', 'id'=>'IEAAFWIKI4CEQZRF'],
 			  ['title'=>'Cerebral Palsy Alliance', 'id'=>'IEAAFWIKI4CALKDE']
 		  ];
@@ -277,7 +277,7 @@ class LandingController extends BaseController
 		  //loop through folders for non-completed projects
 		  $folderTree = $client->get_folder_tree();
 		  foreach($folderTree as $folder) {
-			  //Log::debug($folder['id'] . ' :: ' . $folder['title']);
+			  Log::debug($folder['id'] . ' :: ' . $folder['title']);
 
 			  if (array_key_exists('project', $folder) &&
 			  	$folder['project']['status'] != 'Completed' &&
