@@ -29,5 +29,6 @@ Route::get('/', function () {
 */
 
 Route::group(['middleware' => ['web']], function () {
-	Route::get('/', 'LandingController@index'); //FIXME at some point I should remove the landing page...
+	Route::get('/', 'LandingController@index'); //FIXME need to add an info landing page at some point
+	Route::get('logout', 'LandingController@logout');
 });
