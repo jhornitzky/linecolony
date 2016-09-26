@@ -118,9 +118,6 @@ class LandingController extends BaseController
          'css' => 'col-md-2',
        ];
 
-        //get the team users first
-        $allowedContacts = [];
-
         //lets loop through the contacts into the tree
         foreach ($contacts as $contact) {
             if (!$contact['deleted']) {
@@ -135,7 +132,6 @@ class LandingController extends BaseController
         //now lets get the time this week
         $target = 5 * 8;
         $dateFormat = 'Y-m-d';
-        $niceFormat = 'd-M';
         $start = date($dateFormat, strtotime('last monday', strtotime('tomorrow')));
         $now = date($dateFormat, strtotime('+1 day'));
         $logs = $client->get_account_timelogs($start, $now);
@@ -143,7 +139,7 @@ class LandingController extends BaseController
         //now lets loop through the time logs and add these to the tree
         foreach ($logs as $log) {
             if (array_key_exists($log['userId'], $tree['leaves'])) {
-                $tree['leaves'][$log['userId']]['value'] = round($tree['leaves'][$log['userId']]['value'] + $log['hours']);
+                $tree['leaves'][$log['userId']]['value'] += $log['hours'];
             } else {
                 Log::error('Time log for non existent user id : '.$log['userId']);
             }
@@ -153,7 +149,9 @@ class LandingController extends BaseController
         foreach ($tree['leaves'] as $key => $leaf) {
             if ($leaf['value'] == 0) {
                 unset($tree['leaves'][$key]);
-            }
+            } else {
+				$tree['leaves'][$key]['value'] = round($tree['leaves'][$key]['value']);
+			}
         }
 
         return $tree;
@@ -192,8 +190,7 @@ class LandingController extends BaseController
                 foreach ($task['responsibleIds'] as $responsibleId) {
                     if (array_key_exists($responsibleId, $tree['leaves'])) {
                         $tree['leaves'][$responsibleId]['value']++;
-                    } //TODO add some coloring here...
-                    else {
+                    } else {
                         Log::error('Task for non existent user id : '.$responsibleId);
                     }
                 }
@@ -244,8 +241,7 @@ class LandingController extends BaseController
                 foreach ($task['responsibleIds'] as $responsibleId) {
                     if (array_key_exists($responsibleId, $tree['leaves'])) {
                         $tree['leaves'][$responsibleId]['value']++;
-                    } //TODO add some coloring here...
-                    else {
+                    } else {
                         Log::error('Task for non existent user id : '.$responsibleId);
                     }
                 }
