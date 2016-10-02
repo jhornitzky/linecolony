@@ -13,8 +13,12 @@
         <div class="wrapper">
 			<header class="container-fluid">
 				<div class="row">
-					<div class="col-md-6 page-title text-left">
-						<h1><img src="images/logo.jpg" alt="linecolony"></h1>
+					<div class="col-md-6 text-left">
+						<img src="images/small-logo.jpg" alt="linecolony">
+						<span class="menu">
+							<a href="/">Projects</a>
+							<a href="/team">Team</a>
+						</span>
 					</div>
 					<div class="col-md-6 updated text-right">
 						<a href="/">Reload</a> | <span class="time">Updated {{ $time }}</span> | <a href="logout">Logout</a>
@@ -34,7 +38,15 @@
 								@foreach ($tree['leaves'] as $leaf)
 								<div class="leaf {{ $tree['css'] }} {{ $leaf['css'] }}">
 									<p class="key" title="{{ $leaf['key'] }}">{{ $leaf['key'] }}</p>
+									@if (!is_array($leaf['value']))
 									<p class="value" title="{{ $leaf['value'] }}">{{ $leaf['value'] }}</p>
+									@else
+									<p class="value multiple">
+										@foreach ($leaf['value'] as $v)
+										<span class="{{$v['css']}}">{{$v['value']}}</span>
+										@endforeach
+									</p>
+									@endif
 								</div>
 								@endforeach
 							</div>

@@ -14,7 +14,7 @@
 			<header class="container-fluid">
 				<div class="row">
 					<div class="col-xs-6 page-title text-left">
-						<h1><img src="images/logo.jpg" alt="linecolony"></h1>
+						<h1><img src="images/small-logo.jpg" alt="linecolony"></h1>
 					</div>
 					<div class="col-md-6 updated text-right">
 						<a href="/">Login again</a>

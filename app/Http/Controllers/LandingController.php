@@ -30,23 +30,21 @@ class LandingController extends BaseController
         //auth
         if (!Session::has('wrike_token') || !Session::get('wrike_token') instanceof AccessToken) {
             Log::debug('will authenticate');
-
             return $this->authenticate($oauth, $request);
         } elseif (Session::get('wrike_token')->getExpires() < time()) { //refresh the token
             Log::debug('refreshing token');
             $token = $oauth->getAccessToken('refresh_token', ['refresh_token' => Session::get('wrike_token')->getRefreshToken()]);
             Session::put('wrike_token', $token);
             Session::save();
-
             return redirect('/');
         } else {
             // Test an API call
-          Log::debug('making API call');
+            Log::debug('making API call');
             $output = '';
             $client = new Wrike(Session::get('wrike_token'), $oauth);
 
-          //setup vars
-          $time = date('d-M H:i');
+            //setup vars
+            $time = date('d-M H:i');
             $trees = [];
             $retainerFolders = [
                 ['title' => 'RSPCA NSW', 'id' => 'IEAAFWIKI4C7D5JM', 'target' => 28],
@@ -55,17 +53,68 @@ class LandingController extends BaseController
                 ['title' => 'Cerebral Palsy Alliance', 'id' => 'IEAAFWIKI4CALKDE'],
             ];
 
-          //fetch reusable wrike data
-          $contacts = $client->get_contacts();
+          	//fetch reusable wrike data
+          	$contacts = $client->get_contacts();
 
-          //fetch data and collect into trees
-          $trees[] = $this->getTimeByUser($contacts, $client);
-    	  //$trees[] = $this->getDueAndOverdueByUser($contacts, $client);
-          //$trees[] = $this->getCompletedTasksByUser($contacts, $client);
-          $trees[] = $this->getRetainerHoursByFolder($retainerFolders, $client);
-          $trees[] = $this->getProjectStatus($client);
+          	//fetch data and collect into trees
+          	$trees[] = $this->getTimeByUser($contacts, $client);
+    	  	//$trees[] = $this->getDueAndOverdueByUser($contacts, $client);
+          	//$trees[] = $this->getCompletedTasksByUser($contacts, $client);
+          	$trees[] = $this->getRetainerHoursByFolder($retainerFolders, $client);
+          	$trees[] = $this->getProjectStatus($client);
 
-          return view('welcome', ['trees' => $trees, 'time' => $time]);
+          	return view('trees', ['trees' => $trees, 'time' => $time]);
+        }
+    }
+
+	//FIXME need to clean up the auth code into a better structure
+	public function team(Request $request)
+    {
+        $oauth = new WrikeProvider([
+            //localhost - Line Colony - Laravel
+          'clientId' => env('WRIKE_CLIENT_ID'),
+          'clientSecret' => env('WRIKE_CLIENT_SECRET'),
+          'redirectUri' => env('WRIKE_CLIENT_REDIRECT_URI'),
+        ]);
+
+        //auth
+        if (!Session::has('wrike_token') || !Session::get('wrike_token') instanceof AccessToken) {
+            Log::debug('will authenticate');
+            return $this->authenticate($oauth, $request);
+        } elseif (Session::get('wrike_token')->getExpires() < time()) { //refresh the token
+            Log::debug('refreshing token');
+            $token = $oauth->getAccessToken('refresh_token', ['refresh_token' => Session::get('wrike_token')->getRefreshToken()]);
+            Session::put('wrike_token', $token);
+            Session::save();
+            return redirect('/');
+        } else {
+            // Test an API call
+            Log::debug('making API call');
+            $output = '';
+            $client = new Wrike(Session::get('wrike_token'), $oauth);
+
+            //setup vars
+            $time = date('d-M H:i');
+            $trees = [];
+            $retainerFolders = [
+                ['title' => 'RSPCA NSW', 'id' => 'IEAAFWIKI4C7D5JM', 'target' => 28],
+                ['title' => 'AstraZeneca', 'id' => 'IEAAFWIKI4CRFLND'],
+                ['title' => 'Canteen', 'id' => 'IEAAFWIKI4CEQZRF'],
+                ['title' => 'Cerebral Palsy Alliance', 'id' => 'IEAAFWIKI4CALKDE'],
+            ];
+
+          	//fetch reusable wrike data
+          	$contacts = $client->get_contacts();
+
+          	//fetch data and collect into trees
+          	//$trees[] = $this->getTimeByUser($contacts, $client);
+    	  	//$trees[] = $this->getDueAndOverdueByUser($contacts, $client);
+          	//$trees[] = $this->getCompletedTasksByUser($contacts, $client);
+          	//$trees[] = $this->getRetainerHoursByFolder($retainerFolders, $client);
+          	//$trees[] = $this->getProjectStatus($client);
+			$trees[] = $this->getTeamStatus($contacts, $client);
+
+          	return view('trees', ['trees' => $trees, 'time' => $time]);
         }
     }
 
@@ -207,6 +256,68 @@ class LandingController extends BaseController
         return $tree;
     }
 
+	private function getTeamStatus($contacts, $client)
+    {
+        $tree = [
+         'titleKey' => 'Tasks due by team member',
+         'titleValue' => '',
+         'leaves' => [],
+         'css' => 'col-md-2',
+       ];
+
+        //lets loop through the contacts into the tree
+        foreach ($contacts as $contact) {
+            if (!$contact['deleted']) {
+                $tree['leaves'][$contact['id']] = [
+                    'key' => $contact['firstName']. ' ' . $contact['lastName'],
+                    'value' => [],
+                    'css' => 'col-md-2 tall',
+                ];
+            }
+        }
+
+        //now lets grab tasks
+        $dateFormat = 'Y-m-d';
+        $end = date($dateFormat, strtotime('today'));
+        $fields = ['responsibleIds'];
+        $tasks = $client->get_tasks('Active', $end, $fields);
+
+        //now lets loop through the tasks and add these the user object
+        foreach ($tasks as $task) {
+            Log::debug($task);
+            if (array_key_exists('responsibleIds', $task)) {
+                foreach ($task['responsibleIds'] as $responsibleId) {
+                    if (array_key_exists($responsibleId, $tree['leaves'])) {
+						$css='';
+						if (array_key_exists('dates', $task)) {
+							if (array_key_exists('due', $task['dates'])) {
+								$dueDate = strtotime($task['dates']['due']);
+								if (time() > $dueDate) $css='red';
+							}
+						}
+
+						//add to the tree
+                        $tree['leaves'][$responsibleId]['value'][] = [
+							'css'=>$css,
+							'value'=>$task['title'],
+						];
+                    } else {
+                        Log::error('Task for non existent user id : '.$responsibleId);
+                    }
+                }
+            }
+        }
+
+        //prune the zeros, and optionally add some styling one day
+        foreach ($tree['leaves'] as $key => $leaf) {
+            if (empty($leaf['value'])) {
+                unset($tree['leaves'][$key]);
+            }
+        }
+
+        return $tree;
+    }
+
     private function getCompletedTasksByUser($contacts, $client)
     {
         $tree = [
@@ -321,7 +432,6 @@ class LandingController extends BaseController
             $errorMsg .= '<br><a href="/">Retry</a>';
             Session::forget('wrike_oauth2_state');
             Session::save();
-
             return view('fail', ['errorMsg' => $errorMsg]);
         } else {
             try {
@@ -333,7 +443,8 @@ class LandingController extends BaseController
                 Log::debug('tokens set!');
             } catch (IdentityProviderException $e) {
                 // Failed to get the access token or user details.
-          Log::error('Failed to getAccessToken : '.$e->getMessage());
+          		Log::error('Failed to getAccessToken : '.$e->getMessage());
+	            return view('fail', ['errorMsg' => $e->getMessage()]);
             }
 
             return redirect('/');

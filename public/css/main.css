@@ -104,10 +104,6 @@ body {
 	padding: 2rem;
 }
 
-.page-title {
-	font-size: 4rem;
-}
-
 .tree {
 	margin-bottom: 1rem;
 	border-bottom: 1px solid #333;
@@ -120,9 +116,11 @@ body {
 	border: 1px solid rgb(51,52,51);
 	background-color: rgb(231,231,230);
 }
+
 .leaf.title {
 	background-color: #FFFFFF;
 }
+
 .leaf.green {
 	background-color: #55AA55;
 	color: #FFF;
@@ -157,26 +155,43 @@ body {
 	margin-bottom:0;
 }
 
+.leaf .value.multiple {
+	font-size: 1rem;
+	line-height:1rem;
+}
+
+.leaf.tall {
+	min-height:250px;
+}
+
+.leaf .value span {
+	display:block;
+	padding-top:5px;
+	padding-bottom:5px;
+}
+
+.leaf .value span.red {
+	color: #D46A6A;
+}
+
 header {
 	font-weight: 700;
 	background-color:#FFF;
 }
-header h1 {
-	padding: 0 !important;
-	margin: 0 !important;
-}
-
-header h1 img {
+header .text-left img {
 	height: 60px;
 }
 
-header .search {
-	line-height: 60px;
-}
-
+header .menu,
+header .search,
 header .updated span,
 header .updated a {
 	line-height: 60px;
+}
+
+header .menu a {
+	margin-left:1.5rem;
+	font-size:1.25rem;
 }
 
 .loggedout {
