@@ -51,6 +51,8 @@ class LandingController extends BaseController
                 ['title' => 'AstraZeneca', 'id' => 'IEAAFWIKI4CRFLND'],
                 ['title' => 'Canteen', 'id' => 'IEAAFWIKI4CEQZRF'],
                 ['title' => 'Cerebral Palsy Alliance', 'id' => 'IEAAFWIKI4CALKDE'],
+                ['title' => 'H+Co - CIS', 'id' => 'IEAAFWIKI4DJ5GK6'],
+                ['title' => 'Blinds - CIS', 'id' => 'IEAAFWIKI4DKXQJX']
             ];
 
           	//fetch reusable wrike data
