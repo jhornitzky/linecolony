@@ -39,8 +39,8 @@
 								<div class="leaf {{ $tree['css'] }} {{ $leaf['css'] }}">
 									<p class="key" title="{{ $leaf['key'] }}">{{ $leaf['key'] }}</p>
 									@if (!is_array($leaf['value']))
-									<p class="value" title="{{ $leaf['value'] }}">{{ $leaf['value'] }}</p>
-									@else
+								        <p class="value" title="{{ $leaf['value'] }}">{{ $leaf['value'] }}</p>
+                                	@else
 									<p class="value multiple">
 										@foreach ($leaf['value'] as $v)
 										<span class="{{$v['css']}}">{{$v['value']}}</span>

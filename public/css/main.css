@@ -161,7 +161,12 @@ body {
 }
 
 .leaf.tall {
-	min-height:250px;
+	height:250px;
+	overflow:hidden;
+}
+
+.leaf.scroll {
+	overflow:scroll;
 }
 
 .leaf .value span {
@@ -172,6 +177,18 @@ body {
 
 .leaf .value span.red {
 	color: #D46A6A;
+}
+
+.leaf .value.multiple {
+	text-align: left;
+}
+
+.leaf .value.multiple span:before {
+	border-left:2px solid #AAA;
+}
+
+.leaf .value.multiple span.red:before {
+	border-left-color:red;
 }
 
 header {

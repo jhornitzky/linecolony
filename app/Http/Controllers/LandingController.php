@@ -35,22 +35,6 @@ class LandingController extends BaseController
         ]);
     }
 
-    private function processLogin() {
-        //auth
-        if (!Session::has('wrike_token') || !Session::get('wrike_token') instanceof AccessToken) {
-            Log::debug('will authenticate');
-            return $this->authenticate($oauth, $request);
-        } elseif (Session::get('wrike_token')->getExpires() < time()) { //refresh the token
-            Log::debug('refreshing token');
-            $token = $this->oauth->getAccessToken('refresh_token', ['refresh_token' => Session::get('wrike_token')->getRefreshToken()]);
-            Session::put('wrike_token', $token);
-            Session::save();
-            return redirect('/');
-        } else {
-            return new Wrike(Session::get('wrike_token'), $this->oauth);
-        }
-    }
-
     public function index(Request $request)
     {
         $response = $this->processLogin();
@@ -60,12 +44,14 @@ class LandingController extends BaseController
         //setup vars
         $time = date('d-M H:i');
         $trees = [];
+        /*
         $retainerFolders = [
             ['title' => 'RSPCA NSW', 'id' => 'IEAAFWIKI4C7D5JM', 'target' => 28],
             ['title' => 'AstraZeneca', 'id' => 'IEAAFWIKI4CRFLND'],
             ['title' => 'Canteen', 'id' => 'IEAAFWIKI4CEQZRF'],
             ['title' => 'Cerebral Palsy Alliance', 'id' => 'IEAAFWIKI4CALKDE'],
         ];
+        */
 
       	//fetch reusable wrike data
       	$contacts = $client->get_contacts();
@@ -123,21 +109,35 @@ class LandingController extends BaseController
 				  $css = '';
 				  if ($folder['project']['status'] == 'Red') {
 					  $css = 'red';
+                      $priority = 1;
 				  } elseif ($folder['project']['status'] == 'Yellow') {
 					  $css = 'amber';
+                      $priority = 2;
 				  } elseif ($folder['project']['status'] == 'Green') {
 					  $css = 'green';
+                      $priority = 3;
 				  } elseif ($folder['project']['status'] == 'OnHold') {
 					  $css = 'grey';
+                      $priority = 4;
 				  }
 
 				  $tree['leaves'][] = [
 					'key' => $folder['title'],
+                    'link' => 'https://www.wrike.com/workspace.htm#path=folder&id='.$folder['id'],
 					'value' => '',
 					'css' => $css,
-				];
+                    'priority' => $priority
+				 ];
 			  }
 		  }
+
+          //sort based on priority
+          $sort = array();
+          foreach($tree['leaves'] as $k=>$v) {
+              $sort['priority'][$k] = $v['priority'];
+              $sort['key'][$k] = $v['key'];
+          }
+          array_multisort($sort['priority'], SORT_ASC, $sort['key'], SORT_ASC,$tree['leaves']);
 
 		  return $tree;
 	}
@@ -178,7 +178,7 @@ class LandingController extends BaseController
             }
         }
 
-        //prune the zeros, and optionally add some styling one day
+        //prune the zeroes, and optionally add some styling one day
         foreach ($tree['leaves'] as $key => $leaf) {
             if ($leaf['value'] == 0) {
                 unset($tree['leaves'][$key]);
@@ -243,19 +243,27 @@ class LandingController extends BaseController
 	private function getTeamStatus($contacts, $client)
     {
         $tree = [
-         'titleKey' => 'Todays Tasks',
+         'titleKey' => 'Team tasks by user',
          'titleValue' => '',
          'leaves' => [],
          'css' => 'col-md-2',
        ];
 
         //lets loop through the contacts into the tree
+        dd($contacts);
         foreach ($contacts as $contact) {
-            if (!$contact['deleted']) {
+            if (!$contact['deleted'] && $contact['type'] == 'Person') {
+                $css = 'col-md-2 tall';
+                $myTeam = 2;
+                if (array_key_exists('myTeam', $contact) && $contact['myTeam']) {
+                    $myTeam = 1;
+                    $css .= ' green';
+                }
                 $tree['leaves'][$contact['id']] = [
                     'key' => $contact['firstName']. ' ' . $contact['lastName'],
                     'value' => [],
-                    'css' => 'col-md-2 tall',
+                    'css' => $css,
+                    'myTeam' => $myTeam
                 ];
             }
         }
@@ -298,6 +306,14 @@ class LandingController extends BaseController
                 unset($tree['leaves'][$key]);
             }
         }
+
+        //sort according to my team and then others
+        $sort = array();
+        foreach($tree['leaves'] as $k=>$v) {
+            $sort['myTeam'][$k] = $v['myTeam'];
+            $sort['key'][$k] = $v['key'];
+        }
+        array_multisort($sort['myTeam'], SORT_ASC, $sort['key'], SORT_ASC,$tree['leaves']);
 
         return $tree;
     }
@@ -390,13 +406,20 @@ class LandingController extends BaseController
         return $tree;
     }
 
-    public function logout()
-    {
-        Session::forget('wrike_oauth2_state');
-        Session::forget('wrike_token');
-        Session::save();
-
-        return view('loggedout');
+    private function processLogin() {
+        //auth
+        if (!Session::has('wrike_token') || !Session::get('wrike_token') instanceof AccessToken) {
+            Log::debug('will authenticate');
+            return $this->authenticate($oauth, $request);
+        } elseif (Session::get('wrike_token')->getExpires() < time()) { //refresh the token
+            Log::debug('refreshing token');
+            $token = $this->oauth->getAccessToken('refresh_token', ['refresh_token' => Session::get('wrike_token')->getRefreshToken()]);
+            Session::put('wrike_token', $token);
+            Session::save();
+            return redirect('/');
+        } else {
+            return new Wrike(Session::get('wrike_token'), $this->oauth);
+        }
     }
 
     private function authenticate($oauth, $request)
@@ -433,5 +456,14 @@ class LandingController extends BaseController
 
             return redirect('/');
         }
+    }
+
+    public function logout()
+    {
+        Session::forget('wrike_oauth2_state');
+        Session::forget('wrike_token');
+        Session::save();
+
+        return view('loggedout');
     }
 }
