@@ -250,7 +250,7 @@ class LandingController extends BaseController
        ];
 
         //lets loop through the contacts into the tree
-        dd($contacts);
+        //dd($contacts);
         foreach ($contacts as $contact) {
             if (!$contact['deleted'] && $contact['type'] == 'Person') {
                 $css = 'col-md-2 tall';
@@ -308,12 +308,14 @@ class LandingController extends BaseController
         }
 
         //sort according to my team and then others
+        /*
         $sort = array();
         foreach($tree['leaves'] as $k=>$v) {
             $sort['myTeam'][$k] = $v['myTeam'];
             $sort['key'][$k] = $v['key'];
         }
         array_multisort($sort['myTeam'], SORT_ASC, $sort['key'], SORT_ASC,$tree['leaves']);
+        */
 
         return $tree;
     }
