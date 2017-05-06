@@ -37,7 +37,7 @@ class LandingController extends BaseController
 
     public function index(Request $request)
     {
-        $response = $this->processLogin();
+        $response = $this->processLogin($request);
         if (!($response instanceof Wrike)) return $response;
         $client = $response;
 
@@ -68,7 +68,7 @@ class LandingController extends BaseController
 
 	public function team(Request $request)
     {
-        $response = $this->processLogin();
+        $response = $this->processLogin($request);
         if (!($response instanceof Wrike)) return $response;
         $client = $response;
 
@@ -408,11 +408,11 @@ class LandingController extends BaseController
         return $tree;
     }
 
-    private function processLogin() {
+    private function processLogin($request) {
         //auth
         if (!Session::has('wrike_token') || !Session::get('wrike_token') instanceof AccessToken) {
             Log::debug('will authenticate');
-            return $this->authenticate($oauth, $request);
+            return $this->authenticate($this->oauth, $request);
         } elseif (Session::get('wrike_token')->getExpires() < time()) { //refresh the token
             Log::debug('refreshing token');
             $token = $this->oauth->getAccessToken('refresh_token', ['refresh_token' => Session::get('wrike_token')->getRefreshToken()]);
