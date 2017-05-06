@@ -99,13 +99,10 @@ class LandingController extends BaseController
 		//loop through folders for non-completed projects
 		$folderTree = $client->get_folder_tree();
 		  foreach ($folderTree as $folder) {
-			  Log::debug($folder['id'].' :: '.$folder['title']);
-
 			  if (array_key_exists('project', $folder) &&
 			  $folder['project']['status'] != 'Completed' &&
 			  $folder['project']['status'] != 'Cancelled' &&
 			  $folder['project']['status'] != 'OnHold') {
-				  Log::debug($folder['project']['status'].' :: '.$folder['id'].' :: '.$folder['title']);
 				  $css = '';
 				  if ($folder['project']['status'] == 'Red') {
 					  $css = 'red';
@@ -218,7 +215,6 @@ class LandingController extends BaseController
 
         //now lets loop through the tasks and add these the user object
         foreach ($tasks as $task) {
-            Log::debug($task);
             if (array_key_exists('responsibleIds', $task)) {
                 foreach ($task['responsibleIds'] as $responsibleId) {
                     if (array_key_exists($responsibleId, $tree['leaves'])) {
@@ -276,7 +272,6 @@ class LandingController extends BaseController
 
         //now lets loop through the tasks and add these the user object
         foreach ($tasks as $task) {
-            Log::debug($task);
             if (array_key_exists('responsibleIds', $task)) {
                 foreach ($task['responsibleIds'] as $responsibleId) {
                     if (array_key_exists($responsibleId, $tree['leaves'])) {
@@ -349,7 +344,6 @@ class LandingController extends BaseController
 
         //now lets loop through the tasks and add these the user object
         foreach ($tasks as $task) {
-            Log::debug($task);
             if (array_key_exists('responsibleIds', $task)) {
                 foreach ($task['responsibleIds'] as $responsibleId) {
                     if (array_key_exists($responsibleId, $tree['leaves'])) {
@@ -411,10 +405,8 @@ class LandingController extends BaseController
     private function processLogin($request) {
         //auth
         if (!Session::has('wrike_token') || !Session::get('wrike_token') instanceof AccessToken) {
-            Log::debug('will authenticate');
             return $this->authenticate($this->oauth, $request);
         } elseif (Session::get('wrike_token')->getExpires() < time()) { //refresh the token
-            Log::debug('refreshing token');
             $token = $this->oauth->getAccessToken('refresh_token', ['refresh_token' => Session::get('wrike_token')->getRefreshToken()]);
             Session::put('wrike_token', $token);
             Session::save();
@@ -429,14 +421,12 @@ class LandingController extends BaseController
         if (!$request->has('code')) {
             return $oauth->authorize([], function ($url, $oauth) {
                 Session::put('wrike_oauth2_state', $oauth->getState());
-                Log::debug('Saving the state: '.$oauth->getState());
                 Session::save();
 
                 return redirect()->away($url);
             });
         } elseif (empty($request->input('state')) ||
         ($request->input('state') !== str_replace('+', ' ', Session::get('wrike_oauth2_state')))) {
-            Log::debug('Could not reconcile : '.Session::get('wrike_oauth2_state'));
             $errorMsg = 'Invalid state : '.$request->input('state').' : '.Session::get('wrike_oauth2_state');
             $errorMsg .= '<br><a href="/">Retry</a>';
             Session::forget('wrike_oauth2_state');
@@ -444,12 +434,10 @@ class LandingController extends BaseController
             return view('fail', ['errorMsg' => $errorMsg]);
         } else {
             try {
-                Log::debug('Attempt to getAccessToken for wrike_oauth2_state : '.Session::get('wrike_oauth2_state'));
                 $token = $oauth->getAccessToken('authorization_code', ['code' => $request->input('code')]);
                 Session::put('wrike_oauth2_state', $oauth->getState());
                 Session::put('wrike_token', $token);
                 Session::save();
-                Log::debug('tokens set!');
             } catch (IdentityProviderException $e) {
                 // Failed to get the access token or user details.
           		Log::error('Failed to getAccessToken : '.$e->getMessage());
