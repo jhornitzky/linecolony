@@ -35,6 +35,8 @@ class LandingController extends BaseController
         ]);
     }
 
+    /* ROUTE FUNCTIONS */
+
     public function index(Request $request)
     {
         $response = $this->processLogin($request);
@@ -72,9 +74,6 @@ class LandingController extends BaseController
         if (!($response instanceof Wrike)) return $response;
         $client = $response;
 
-        // Setup client
-        $client = new Wrike(Session::get('wrike_token'), $this->oauth);
-
         //setup vars
         $time = date('d-M H:i');
         $trees = [];
@@ -86,6 +85,130 @@ class LandingController extends BaseController
 		$trees[] = $this->getTeamStatus($contacts, $client);
 
       	return view('trees', ['trees' => $trees, 'time' => $time]);
+    }
+
+    public function owners(Request $request) {
+        $response = $this->processLogin($request);
+        if (!($response instanceof Wrike)) return $response;
+        $client = $response;
+
+        //setup vars
+        $time = date('d-M H:i');
+        $trees = [];
+
+        //fetch reusable wrike data
+      	$contacts = $client->get_contacts();
+
+        //fetch data and collect into trees
+		$trees[] = $this->getProjectOwners($contacts, $client);
+
+      	return view('trees', ['trees' => $trees, 'time' => $time]);
+    }
+
+
+    /* PRIVATE FUNCTIONS */
+
+    private function getProjectOwners($contacts, $client) {
+        $tree = [
+         'titleKey' => 'Projects by owner',
+         'titleValue' => '',
+         'leaves' => [],
+         'css' => 'col-md-2',
+       ];
+
+        //lets loop through the contacts into the tree
+        //dd($contacts);
+        foreach ($contacts as $contact) {
+            if (!$contact['deleted'] && $contact['type'] == 'Person') {
+                $css = 'col-md-2 extra tall';
+                $myTeam = 2;
+                if (array_key_exists('myTeam', $contact) && $contact['myTeam']) {
+                    $myTeam = 1;
+                    $css .= ' green';
+                }
+                $tree['leaves'][$contact['id']] = [
+                    'key' => $contact['firstName']. ' ' . $contact['lastName'],
+                    'value' => [],
+                    'css' => $css,
+                    'myTeam' => $myTeam
+                ];
+            }
+        }
+
+        //get the projects connected through
+        //loop through folders for non-completed projects
+		$folderTree = $client->get_folder_tree();
+        $projects = [];
+		  foreach ($folderTree as $folder) {
+			  if (array_key_exists('project', $folder) &&
+              array_key_exists('ownerIds', $folder['project']) &&
+			  $folder['project']['status'] != 'Completed' &&
+			  $folder['project']['status'] != 'Cancelled' &&
+			  $folder['project']['status'] != 'OnHold') {
+				  $css = '';
+				  if ($folder['project']['status'] == 'Red') {
+					  $css = 'red';
+                      $priority = 1;
+				  } elseif ($folder['project']['status'] == 'Yellow') {
+					  $css = 'amber';
+                      $priority = 2;
+				  } elseif ($folder['project']['status'] == 'Green') {
+					  $css = 'green';
+                      $priority = 3;
+				  } elseif ($folder['project']['status'] == 'OnHold') {
+					  $css = 'grey';
+                      $priority = 4;
+				  }
+
+                  //store projects
+                  $projects[] = [
+                      'css'=>$css,
+                      'value'=>$folder['title'],
+                      'ownerIds' =>$folder['project']['ownerIds'],
+                      'link' => 'https://www.wrike.com/workspace.htm#path=folder&id='.$folder['id']
+                  ];
+			  }
+		  }
+
+
+        //now lets loop through the tasks and add these the user object
+        foreach ($projects as $project) {
+            if (array_key_exists('ownerIds', $project)) {
+                foreach ($project['ownerIds'] as $ownerId) {
+                    if (array_key_exists($ownerId, $tree['leaves'])) {
+						$css = $project['css'];
+
+						//add to the tree
+                        $tree['leaves'][$ownerId]['value'][] = [
+							'css'=>$css,
+							'value'=>$project['value'],
+							'link'=>$project['link']
+						];
+                    } else {
+                        Log::error('Project for non existent user id : '.$ownerId);
+                    }
+                }
+            }
+        }
+
+        //prune the zeros, and optionally add some styling one day
+        foreach ($tree['leaves'] as $key => $leaf) {
+            if (empty($leaf['value'])) {
+                unset($tree['leaves'][$key]);
+            }
+        }
+
+        //sort according to my team and then others
+        /*
+        $sort = array();
+        foreach($tree['leaves'] as $k=>$v) {
+            $sort['myTeam'][$k] = $v['myTeam'];
+            $sort['key'][$k] = $v['key'];
+        }
+        array_multisort($sort['myTeam'], SORT_ASC, $sort['key'], SORT_ASC,$tree['leaves']);
+        */
+
+        return $tree;
     }
 
 	private function getProjectStatus($client) {

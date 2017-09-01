@@ -163,9 +163,18 @@ body {
 .leaf.tall {
 	height:250px;
 	overflow:hidden;
+	cursor:pointer;
+}
+
+.leaf.extra.tall {
+	height:500px;
+}
+.leaf.auto.tall {
+	height:auto;
 }
 
 .leaf.scroll {
+	background-color: #CCCCCC;
 	overflow:scroll;
 }
 
@@ -175,8 +184,17 @@ body {
 	padding-bottom:5px;
 }
 
+.leaf .value span.green {
+	color: #55AA55;
+}
+.leaf .value span.amber {
+	color: #D49A6A;
+}
 .leaf .value span.red {
 	color: #D46A6A;
+}
+.leaf .value span.grey {
+	color: #AAAAAA;
 }
 
 .leaf .value.multiple {

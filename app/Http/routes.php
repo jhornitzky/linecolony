@@ -32,5 +32,6 @@ Route::group(['middleware' => ['web']], function () {
 	Route::get('/', 'LandingController@index'); //FIXME need to add an info landing page at some point
 	Route::get('/projects', 'LandingController@index'); //FIXME need to add an info landing page at some point
 	Route::get('/team', 'LandingController@team'); //FIXME need to add an info landing page at some point
+	Route::get('/owners', 'LandingController@owners'); //FIXME need to add an info landing page at some point
 	Route::get('logout', 'LandingController@logout');
 });

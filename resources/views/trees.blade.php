@@ -8,6 +8,7 @@
 		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap-theme.min.css" integrity="sha384-fLW2N01lMqjakBkx3l/M9EahuwpSfeNvV63J5ezn3uZzapT0u7EYsXMjQV+0En5r" crossorigin="anonymous">
 		<link rel="stylesheet" href="css/main.css" rel="stylesheet" type="text/css">
 		<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js" integrity="sha384-0mSbJDEHialfmuBBQP6A4Qrprq5OVfW37PRR3j5ELqxss1yVqOtnepnHVP9aJ7xS" crossorigin="anonymous"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js" crossorigin="anonymous"></script>
     </head>
     <body>
         <div class="wrapper">
@@ -18,6 +19,7 @@
 						<span class="menu">
 							<a href="/">Projects</a>
 							<a href="/team">Team</a>
+							<a href="/owners">Owners</a>
 						</span>
 					</div>
 					<div class="col-md-6 updated text-right">
@@ -36,7 +38,7 @@
 						<div class="col-md-12">
 							<div class="row">
 								@foreach ($tree['leaves'] as $leaf)
-								<div class="leaf {{ $tree['css'] }} {{ $leaf['css'] }}">
+								<div class="leaf {{ $tree['css'] }} {{ $leaf['css'] }}"  onclick="$(this).toggleClass('scroll')">
 									<p class="key" title="{{ $leaf['key'] }}">{{ $leaf['key'] }}</p>
 									@if (!is_array($leaf['value']))
 								        <p class="value" title="{{ $leaf['value'] }}">{{ $leaf['value'] }}</p>
