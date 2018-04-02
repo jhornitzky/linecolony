@@ -17,8 +17,9 @@
 					<div class="col-md-6 text-left">
 						<img src="images/small-logo.jpg" alt="linecolony">
 						<span class="menu">
-							<a href="/">Projects</a>
-							<a href="/team">Team</a>
+							<a href="/">Hours</a>
+							<a href="/projects">Projects</a>
+							<a href="/overdue">Overdue</a>
 							<a href="/owners">Owners</a>
 						</span>
 					</div>

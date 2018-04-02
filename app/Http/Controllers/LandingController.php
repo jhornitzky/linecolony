@@ -37,7 +37,7 @@ class LandingController extends BaseController
 
     /* ROUTE FUNCTIONS */
 
-    public function index(Request $request)
+    public function hours(Request $request)
     {
         $response = $this->processLogin($request);
         if (!($response instanceof Wrike)) return $response;
@@ -46,29 +46,36 @@ class LandingController extends BaseController
         //setup vars
         $time = date('d-M H:i');
         $trees = [];
-        /*
-        $retainerFolders = [
-            ['title' => 'RSPCA NSW', 'id' => 'IEAAFWIKI4C7D5JM', 'target' => 28],
-            ['title' => 'AstraZeneca', 'id' => 'IEAAFWIKI4CRFLND'],
-            ['title' => 'Canteen', 'id' => 'IEAAFWIKI4CEQZRF'],
-            ['title' => 'Cerebral Palsy Alliance', 'id' => 'IEAAFWIKI4CALKDE'],
-        ];
-        */
 
       	//fetch reusable wrike data
       	$contacts = $client->get_contacts();
 
       	//fetch data and collect into trees
       	$trees[] = $this->getTimeByUser($contacts, $client);
-	  	//$trees[] = $this->getDueAndOverdueByUser($contacts, $client);
-      	//$trees[] = $this->getCompletedTasksByUser($contacts, $client);
-      	//$trees[] = $this->getRetainerHoursByFolder($retainerFolders, $client);
+
+      	return view('trees', ['trees' => $trees, 'time' => $time]);
+    }
+
+    public function projects(Request $request)
+    {
+        $response = $this->processLogin($request);
+        if (!($response instanceof Wrike)) return $response;
+        $client = $response;
+
+        //setup vars
+        $time = date('d-M H:i');
+        $trees = [];
+
+      	//fetch reusable wrike data
+      	$contacts = $client->get_contacts();
+
+      	//fetch data and collect into trees
       	$trees[] = $this->getProjectStatus($client);
 
       	return view('trees', ['trees' => $trees, 'time' => $time]);
     }
 
-	public function team(Request $request)
+	public function overdue(Request $request)
     {
         $response = $this->processLogin($request);
         if (!($response instanceof Wrike)) return $response;
@@ -262,10 +269,10 @@ class LandingController extends BaseController
 		  return $tree;
 	}
 
-    private function getTimeByUser($contacts, $client)
+    private function getTimeByUser($contacts, $client, $negativeDays = 0, $titleKey = 'Hours per user this week')
     {
         $tree = [
-         'titleKey' => 'Hours per user this week',
+         'titleKey' => $titleKey,
          'titleValue' => '',
          'leaves' => [],
          'css' => 'col-md-2',
@@ -283,10 +290,10 @@ class LandingController extends BaseController
         }
 
         //now lets get the time this week
-        $target = 5 * 8;
+        $target = 5 * 7.5;
         $dateFormat = 'Y-m-d';
         $start = date($dateFormat, strtotime('last monday', strtotime('tomorrow')));
-        $now = date($dateFormat, strtotime('+1 day'));
+        $now = date($dateFormat, strtotime('+1 days'));
         $logs = $client->get_account_timelogs($start, $now);
 
         //now lets loop through the time logs and add these to the tree
@@ -306,6 +313,13 @@ class LandingController extends BaseController
 				$tree['leaves'][$key]['value'] = round($tree['leaves'][$key]['value']);
 			}
         }
+
+        //order by users with the highest values
+        $sort = array();
+        foreach($tree['leaves'] as $k=>$v) {
+            $sort['value'][$k] = $v['value'];
+        }
+        array_multisort($sort['value'], SORT_DESC,$tree['leaves']);
 
         return $tree;
     }

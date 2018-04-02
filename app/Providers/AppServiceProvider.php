@@ -13,7 +13,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot()
     {
-        //
+        //reset error logging
+        error_reporting(E_ALL & ~E_DEPRECATED & ~E_NOTICE);
     }
 
     /**
