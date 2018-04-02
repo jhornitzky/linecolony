@@ -51,7 +51,11 @@ class LandingController extends BaseController
       	$contacts = $client->get_contacts();
 
       	//fetch data and collect into trees
-      	$trees[] = $this->getTimeByUser($contacts, $client);
+      	$trees[] = $this->getTimeByUser($contacts, $client, 0, 'Hours per user this week');
+      	$trees[] = $this->getTimeByUser($contacts, $client, 7, 'Hours per user last week');
+      	$trees[] = $this->getTimeByUser($contacts, $client, 14, 'Hours per user two weeks ago');
+      	$trees[] = $this->getTimeByUser($contacts, $client, 21, 'Hours per user three weeks ago');
+      	$trees[] = $this->getTimeByUser($contacts, $client, 28, 'Hours per user four weeks ago');
 
       	return view('trees', ['trees' => $trees, 'time' => $time]);
     }
@@ -275,7 +279,7 @@ class LandingController extends BaseController
          'titleKey' => $titleKey,
          'titleValue' => '',
          'leaves' => [],
-         'css' => 'col-md-2',
+         'css' => 'col-md-2'
        ];
 
         //lets loop through the contacts into the tree
@@ -292,8 +296,10 @@ class LandingController extends BaseController
         //now lets get the time this week
         $target = 5 * 7.5;
         $dateFormat = 'Y-m-d';
-        $start = date($dateFormat, strtotime('last monday', strtotime('tomorrow')));
-        $now = date($dateFormat, strtotime('+1 days'));
+        $dayString = '+1 days';
+        if ($negativeDays > 0) $dayString = -1*($negativeDays-1).' days';
+        $start = date($dateFormat, strtotime('last monday', strtotime($dayString)));
+        $now = date($dateFormat, strtotime('next sunday',strtotime($start)));
         $logs = $client->get_account_timelogs($start, $now);
 
         //now lets loop through the time logs and add these to the tree
@@ -310,7 +316,10 @@ class LandingController extends BaseController
             if ($leaf['value'] == 0) {
                 unset($tree['leaves'][$key]);
             } else {
-				$tree['leaves'][$key]['value'] = round($tree['leaves'][$key]['value']);
+                $tree['leaves'][$key]['value'] = round($tree['leaves'][$key]['value']);
+                if ($leaf['value'] < $target) {
+                    $tree['leaves'][$key]['css'] = 'amber';
+                } 
 			}
         }
 
