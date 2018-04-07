@@ -75,6 +75,7 @@ class LandingController extends BaseController
 
       	//fetch data and collect into trees
       	$trees[] = $this->getProjectStatus($client);
+      	$trees[] = $this->getRetainers($client);
 
       	return view('trees', ['trees' => $trees, 'time' => $time]);
     }
@@ -119,29 +120,43 @@ class LandingController extends BaseController
 
     /* PRIVATE FUNCTIONS */
 
+    private function findGroupsForContact($groups, $contact) {
+        $groupsFound = [];
+        foreach($groups as $group) {
+            if (in_array($contact['id'], $group['memberIds'])) {
+                $groupsFound[] = $group['firstName'];
+            }
+        }
+        return implode(',',$groupsFound);
+    }
+
     private function getProjectOwners($contacts, $client) {
         $tree = [
-         'titleKey' => 'Projects by owner',
-         'titleValue' => '',
-         'leaves' => [],
-         'css' => 'col-md-2',
-       ];
+            'titleKey' => 'Projects by owner',
+            'titleValue' => '',
+            'leaves' => [],
+            'css' => 'col-md-2',
+        ];
+
+        //get groups first
+        $groups=[];
+        foreach ($contacts as $contact) {
+            if (!$contact['deleted'] && $contact['type'] == 'Group') {
+                $groups[] = $contact;
+            }
+        }
 
         //lets loop through the contacts into the tree
         //dd($contacts);
         foreach ($contacts as $contact) {
             if (!$contact['deleted'] && $contact['type'] == 'Person') {
                 $css = 'col-md-2 extra tall';
-                $myTeam = 2;
-                if (array_key_exists('myTeam', $contact) && $contact['myTeam']) {
-                    $myTeam = 1;
-                    $css .= ' green';
-                }
+                $groupString = $this->findGroupsForContact($groups, $contact);
                 $tree['leaves'][$contact['id']] = [
-                    'key' => $contact['firstName']. ' ' . $contact['lastName'],
+                    'key' => $contact['firstName'].' '.$contact['lastName'].' ('.$groupString.')',
+                    'groups' => $groupString,
                     'value' => [],
-                    'css' => $css,
-                    'myTeam' => $myTeam
+                    'css' => $css
                 ];
             }
         }
@@ -149,40 +164,72 @@ class LandingController extends BaseController
         //get the projects connected through
         //loop through folders for non-completed projects
 		$folderTree = $client->get_folder_tree();
+        //dd($folderTree);
+        $projectIds = [];
+        foreach ($folderTree as $folder) {
+            if (array_key_exists('project', $folder) &&
+            array_key_exists('ownerIds', $folder['project']) &&
+            $folder['project']['status'] != 'Completed' &&
+            $folder['project']['status'] != 'Cancelled' &&
+            $folder['project']['status'] != 'OnHold') {
+                //store projectIds
+                $projectIds[] = $folder['id'];
+            }
+        }
+
+        //now lets grab the projects with data
+        $projectsData = $client->send_request_via_factory([
+            'method' => 'get',
+            'action' => '/folders/'.implode(',',$projectIds),
+            'params' => []
+        ]);
+
         $projects = [];
-		  foreach ($folderTree as $folder) {
-			  if (array_key_exists('project', $folder) &&
-              array_key_exists('ownerIds', $folder['project']) &&
-			  $folder['project']['status'] != 'Completed' &&
-			  $folder['project']['status'] != 'Cancelled' &&
-			  $folder['project']['status'] != 'OnHold') {
-				  $css = '';
-				  if ($folder['project']['status'] == 'Red') {
-					  $css = 'red';
-                      $priority = 1;
-				  } elseif ($folder['project']['status'] == 'Yellow') {
-					  $css = 'amber';
-                      $priority = 2;
-				  } elseif ($folder['project']['status'] == 'Green') {
-					  $css = 'green';
-                      $priority = 3;
-				  } elseif ($folder['project']['status'] == 'OnHold') {
-					  $css = 'grey';
-                      $priority = 4;
-				  }
+        foreach ($projectsData as $folder) {
+            //set color
+            $css = '';
+            if ($folder['project']['status'] == 'Red') {
+                $css = 'red';
+                $priority = 1;
+            } elseif ($folder['project']['status'] == 'Yellow') {
+                $css = 'amber';
+                $priority = 2;
+            } elseif ($folder['project']['status'] == 'Green') {
+                $css = 'green';
+                $priority = 3;
+            } elseif ($folder['project']['status'] == 'OnHold') {
+                $css = 'grey';
+                $priority = 4;
+            }
 
-                  //store projects
-                  $projects[] = [
-                      'css'=>$css,
-                      'value'=>$folder['title'],
-                      'ownerIds' =>$folder['project']['ownerIds'],
-                      'link' => 'https://www.wrike.com/workspace.htm#path=folder&id='.$folder['id']
-                  ];
-			  }
-		  }
+            //find phase
+            $phase = null;
+            foreach($folder['customFields'] as $customField) {
+                if ($customField['id'] == 'IEAAFWIKJUAARM2Z') { //FIXME phase set manually
+                    $phase = $customField['value'];
+                }
+            } 
+
+            //store project data
+            $projects[] = [
+                'id'=>$folder['id'],
+                'css'=>$css,
+                'value'=>$folder['title'].' : '.$phase,
+                'phase'=>$phase, 
+                'ownerIds' =>$folder['project']['ownerIds'],
+                'link' => $folder['permalink']
+            ];
+        }
+
+        //sort based on the phases
+        $sort = array();
+        foreach($projects as $k=>$v) {
+            $sort['phase'][$k] = $v['phase'];
+        }
+        array_multisort($sort['phase'], SORT_ASC, $projects);
 
 
-        //now lets loop through the tasks and add these the user object
+        //now lets loop through the tasks and add these to the user object
         foreach ($projects as $project) {
             if (array_key_exists('ownerIds', $project)) {
                 foreach ($project['ownerIds'] as $ownerId) {
@@ -202,6 +249,7 @@ class LandingController extends BaseController
             }
         }
 
+
         //prune the zeros, and optionally add some styling one day
         foreach ($tree['leaves'] as $key => $leaf) {
             if (empty($leaf['value'])) {
@@ -209,68 +257,173 @@ class LandingController extends BaseController
             }
         }
 
-        //sort according to my team and then others
-        /*
+        //sort according to groups and then others
         $sort = array();
         foreach($tree['leaves'] as $k=>$v) {
-            $sort['myTeam'][$k] = $v['myTeam'];
-            $sort['key'][$k] = $v['key'];
+            $sort['groups'][$k] = $v['groups'];
         }
-        array_multisort($sort['myTeam'], SORT_ASC, $sort['key'], SORT_ASC,$tree['leaves']);
-        */
+        array_multisort($sort['groups'], SORT_ASC, $tree['leaves']);
 
         return $tree;
     }
 
 	private function getProjectStatus($client) {
 		$tree = [
-		  'titleKey' => 'Project Status',
+		  //'titleKey' => 'Project Status',
 		  'titleValue' => '',
 		  'leaves' => [],
 		  'css' => 'col-md-2',
-		];
-
-		//loop through folders for non-completed projects
+        ];
+    
 		$folderTree = $client->get_folder_tree();
-		  foreach ($folderTree as $folder) {
-			  if (array_key_exists('project', $folder) &&
-			  $folder['project']['status'] != 'Completed' &&
-			  $folder['project']['status'] != 'Cancelled' &&
-			  $folder['project']['status'] != 'OnHold') {
-				  $css = '';
-				  if ($folder['project']['status'] == 'Red') {
-					  $css = 'red';
-                      $priority = 1;
-				  } elseif ($folder['project']['status'] == 'Yellow') {
-					  $css = 'amber';
-                      $priority = 2;
-				  } elseif ($folder['project']['status'] == 'Green') {
-					  $css = 'green';
-                      $priority = 3;
-				  } elseif ($folder['project']['status'] == 'OnHold') {
-					  $css = 'grey';
-                      $priority = 4;
-				  }
+        //dd($folderTree);
+        $projectIds = [];
+        foreach ($folderTree as $folder) {
+            if (array_key_exists('project', $folder)) {
+                //store projectIds
+                $projectIds[] = $folder['id'];
+            }
+        }
 
-				  $tree['leaves'][] = [
-					'key' => $folder['title'],
-                    'link' => 'https://www.wrike.com/workspace.htm#path=folder&id='.$folder['id'],
-					'value' => '',
-					'css' => $css,
-                    'priority' => $priority
-				 ];
-			  }
-		  }
+        //now lets grab the projects with data
+        $projectsData = $client->send_request_via_factory([
+            'method' => 'get',
+            'action' => '/folders/'.implode(',',$projectIds),
+            'params' => []
+        ]);
 
-          //sort based on priority
-          $sort = array();
-          foreach($tree['leaves'] as $k=>$v) {
-              $sort['priority'][$k] = $v['priority'];
-              $sort['key'][$k] = $v['key'];
-          }
-          array_multisort($sort['priority'], SORT_ASC, $sort['key'], SORT_ASC,$tree['leaves']);
+        $projects = [];
+        foreach ($projectsData as $folder) {
+            if (array_key_exists('project', $folder) &&
+            $folder['project']['status'] != 'Completed' &&
+            $folder['project']['status'] != 'Cancelled' &&
+            $folder['project']['status'] != 'OnHold') {
+                $css = '';
+                if ($folder['project']['status'] == 'Red') {
+                    $css = 'red';
+                    $priority = 1;
+                } elseif ($folder['project']['status'] == 'Yellow') {
+                    $css = 'amber';
+                    $priority = 2;
+                } elseif ($folder['project']['status'] == 'Green') {
+                    $css = 'green';
+                    $priority = 3;
+                } elseif ($folder['project']['status'] == 'OnHold') {
+                    $css = 'grey';
+                    $priority = 4;
+                }
 
-		  return $tree;
+                //find phase
+                $phase = null;
+                foreach($folder['customFields'] as $customField) {
+                    if ($customField['id'] == 'IEAAFWIKJUAARM2Z') { //FIXME phase set manually
+                        $phase = $customField['value'];
+                    }
+                } 
+                if ($phase != '08 Retainer') { //dont include retainers
+                    $tree['leaves'][] = [
+                        'key' => $folder['title'],
+                        'link' => 'https://www.wrike.com/workspace.htm#path=folder&id='.$folder['id'],
+                        'value' => '',
+                        'css' => $css,
+                        'priority' => $priority
+                    ];
+                }
+            }
+        }
+
+        //sort based on priority
+        $sort = array();
+        foreach($tree['leaves'] as $k=>$v) {
+            $sort['priority'][$k] = $v['priority'];
+            $sort['key'][$k] = $v['key'];
+        }
+        array_multisort($sort['priority'], SORT_ASC, $sort['key'], SORT_ASC,$tree['leaves']);
+
+        //set number of projects
+		$tree['titleKey'] = 'Projects ('.count($tree['leaves']).')';
+
+        return $tree;
+    }
+
+    
+    private function getRetainers($client) {
+		$tree = [
+		  //'titleKey' => 'Project Status',
+		  'titleValue' => '',
+		  'leaves' => [],
+		  'css' => 'col-md-2',
+        ];
+
+		$folderTree = $client->get_folder_tree();
+        //dd($folderTree);
+        $projectIds = [];
+        foreach ($folderTree as $folder) {
+            if (array_key_exists('project', $folder)) {
+                //store projectIds
+                $projectIds[] = $folder['id'];
+            }
+        }
+
+        //now lets grab the projects with data
+        $projectsData = $client->send_request_via_factory([
+            'method' => 'get',
+            'action' => '/folders/'.implode(',',$projectIds),
+            'params' => []
+        ]);
+
+        $projects = [];
+        foreach ($projectsData as $folder) {
+            if (array_key_exists('project', $folder) &&
+            $folder['project']['status'] != 'Completed' &&
+            $folder['project']['status'] != 'Cancelled' &&
+            $folder['project']['status'] != 'OnHold') {
+                $css = '';
+                if ($folder['project']['status'] == 'Red') {
+                    $css = 'red';
+                    $priority = 1;
+                } elseif ($folder['project']['status'] == 'Yellow') {
+                    $css = 'amber';
+                    $priority = 2;
+                } elseif ($folder['project']['status'] == 'Green') {
+                    $css = 'green';
+                    $priority = 3;
+                } elseif ($folder['project']['status'] == 'OnHold') {
+                    $css = 'grey';
+                    $priority = 4;
+                }
+
+                //find phase
+                $phase = null;
+                foreach($folder['customFields'] as $customField) {
+                    if ($customField['id'] == 'IEAAFWIKJUAARM2Z') { //FIXME phase set manually
+                        $phase = $customField['value'];
+                    }
+                } 
+                if ($phase == '08 Retainer') { //include retainers
+                    $tree['leaves'][] = [
+                        'key' => $folder['title'],
+                        'link' => 'https://www.wrike.com/workspace.htm#path=folder&id='.$folder['id'],
+                        'value' => '',
+                        'css' => $css,
+                        'priority' => $priority
+                    ];
+                }
+            }
+        }
+
+        //sort based on priority
+        $sort = array();
+        foreach($tree['leaves'] as $k=>$v) {
+            $sort['priority'][$k] = $v['priority'];
+            $sort['key'][$k] = $v['key'];
+        }
+        array_multisort($sort['priority'], SORT_ASC, $sort['key'], SORT_ASC,$tree['leaves']);
+
+        //set number of projects
+		$tree['titleKey'] = 'Retainers ('.count($tree['leaves']).')';
+
+        return $tree;
 	}
 
     private function getTimeByUser($contacts, $client, $negativeDays = 0, $titleKey = 'Hours per user this week')
@@ -385,7 +538,7 @@ class LandingController extends BaseController
 	private function getTeamStatus($contacts, $client)
     {
         $tree = [
-         'titleKey' => 'Team tasks by user',
+         'titleKey' => 'Overdue tasks by user',
          'titleValue' => '',
          'leaves' => [],
          'css' => 'col-md-2',
@@ -396,16 +549,11 @@ class LandingController extends BaseController
         foreach ($contacts as $contact) {
             if (!$contact['deleted'] && $contact['type'] == 'Person') {
                 $css = 'col-md-2 tall';
-                $myTeam = 2;
-                if (array_key_exists('myTeam', $contact) && $contact['myTeam']) {
-                    $myTeam = 1;
-                    $css .= ' green';
-                }
                 $tree['leaves'][$contact['id']] = [
                     'key' => $contact['firstName']. ' ' . $contact['lastName'],
                     'value' => [],
                     'css' => $css,
-                    'myTeam' => $myTeam
+                    'count' => 0
                 ];
             }
         }
@@ -433,7 +581,8 @@ class LandingController extends BaseController
                         $tree['leaves'][$responsibleId]['value'][] = [
 							'css'=>$css,
 							'value'=>$task['title'],
-						];
+                        ];
+                        $tree['leaves'][$responsibleId]['count']++;
                     } else {
                         Log::error('Task for non existent user id : '.$responsibleId);
                     }
@@ -445,18 +594,17 @@ class LandingController extends BaseController
         foreach ($tree['leaves'] as $key => $leaf) {
             if (empty($leaf['value'])) {
                 unset($tree['leaves'][$key]);
+            } else {
+                $tree['leaves'][$key]['key'] = $tree['leaves'][$key]['key'].' ('.$tree['leaves'][$key]['count'].')';
             }
         }
 
-        //sort according to my team and then others
-        /*
+        //order by users with the highest values
         $sort = array();
         foreach($tree['leaves'] as $k=>$v) {
-            $sort['myTeam'][$k] = $v['myTeam'];
-            $sort['key'][$k] = $v['key'];
+            $sort['count'][$k] = $v['count'];
         }
-        array_multisort($sort['myTeam'], SORT_ASC, $sort['key'], SORT_ASC,$tree['leaves']);
-        */
+        array_multisort($sort['count'], SORT_DESC,$tree['leaves']);
 
         return $tree;
     }

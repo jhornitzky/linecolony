@@ -18,9 +18,10 @@
 						<img src="images/small-logo.jpg" alt="linecolony">
 						<span class="menu">
 							<a href="/">Hours</a>
-							<a href="/projects">Projects</a>
-							<a href="/overdue">Overdue</a>
+							<a href="/projects">Status</a>
+							<a href="/retainers">Retainers</a>
 							<a href="/owners">Owners</a>
+							<a href="/overdue">Overdue</a>
 						</span>
 					</div>
 					<div class="col-md-6 updated text-right">
