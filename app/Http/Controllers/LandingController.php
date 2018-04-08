@@ -28,10 +28,9 @@ class LandingController extends BaseController
     public function __construct()
     {
         $this->oauth = new WrikeProvider([
-            //localhost - Line Colony - Laravel
-          'clientId' => env('WRIKE_CLIENT_ID'),
-          'clientSecret' => env('WRIKE_CLIENT_SECRET'),
-          'redirectUri' => env('WRIKE_CLIENT_REDIRECT_URI'),
+          'clientId' => config('wrike.id'),
+          'clientSecret' => config('wrike.secret'),
+          'redirectUri' => config('wrike.redirect'),
         ]);
     }
 
