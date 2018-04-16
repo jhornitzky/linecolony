@@ -451,7 +451,7 @@ class LandingController extends BaseController
         $dayString = '+1 days';
         if ($negativeDays > 0) $dayString = -1*($negativeDays-1).' days';
         $start = date($dateFormat, strtotime('last monday', strtotime($dayString)));
-        $now = date($dateFormat, strtotime('next sunday',strtotime($start)));
+        $now = date($dateFormat, strtotime('next monday',strtotime($start)));
         $logs = $client->get_account_timelogs($start, $now);
 
         //now lets loop through the time logs and add these to the tree
