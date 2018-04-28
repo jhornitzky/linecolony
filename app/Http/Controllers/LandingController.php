@@ -152,7 +152,8 @@ class LandingController extends BaseController
                 $css = 'col-md-2 extra tall';
                 $groupString = $this->findGroupsForContact($groups, $contact);
                 $tree['leaves'][$contact['id']] = [
-                    'key' => $contact['firstName'].' '.$contact['lastName'].' ('.$groupString.')',
+                    'key' => $contact['firstName'].' '.$contact['lastName'],
+                    'subtitle' => $groupString,
                     'groups' => $groupString,
                     'value' => [],
                     'css' => $css
@@ -204,7 +205,7 @@ class LandingController extends BaseController
             //find phase
             $phase = null;
             foreach($folder['customFields'] as $customField) {
-                if ($customField['id'] == 'IEAAFWIKJUAARM2Z') { //FIXME phase set manually
+                if ($customField['id'] == 'IEAAFWIKJUAARM2Z') { //FIXME phase set through config
                     $phase = $customField['value'];
                 }
             } 
@@ -249,10 +250,13 @@ class LandingController extends BaseController
         }
 
 
-        //prune the zeros, and optionally add some styling one day
+        //prune the zeros, add the number of projects to the header and optionally add some styling one day
         foreach ($tree['leaves'] as $key => $leaf) {
             if (empty($leaf['value'])) {
                 unset($tree['leaves'][$key]);
+            } else {
+                $tree['leaves'][$key]['numberOfProjects'] .= count($tree['leaves'][$key]['value']);
+                $tree['leaves'][$key]['key'] .= ' (' .count($tree['leaves'][$key]['value']) . ')';
             }
         }
 
