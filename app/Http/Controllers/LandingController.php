@@ -153,7 +153,7 @@ class LandingController extends BaseController
                 $groupString = $this->findGroupsForContact($groups, $contact);
                 $tree['leaves'][$contact['id']] = [
                     'key' => $contact['firstName'].' '.$contact['lastName'],
-                    'subtitle' => $groupString,
+                    //'subtitle' => $groupString,
                     'groups' => $groupString,
                     'value' => [],
                     'css' => $css
@@ -204,9 +204,33 @@ class LandingController extends BaseController
 
             //find phase
             $phase = null;
+            $monthlyValue = null;
+            
+            //FIXME set custom field ids through config
             foreach($folder['customFields'] as $customField) {
-                if ($customField['id'] == 'IEAAFWIKJUAARM2Z') { //FIXME phase set through config
+                if ($customField['id'] == 'IEAAFWIKJUAARM2Z') { 
                     $phase = $customField['value'];
+                } else if ($customField['id'] == 'IEAAFWIKJUAAXA46') { //project value for one-off projects
+                    $projectValue = $customField['value'];
+
+                    //work out how many months to divide the project by
+                    if (!isset($folder['project']['startDate'])) {
+                        $monthlyValue = $projectValue/3;
+                    } else {
+                        $startDate = strtotime($folder['project']['startDate']);
+                        $finishDate = strtotime($folder['project']['endDate']);
+                        if (time() - $finishDate > 0) { //if today is later than the original finish time, lets go with today instead
+                            $finishDate = time();
+                        }
+                        //now calculate the difference in terms of months
+                        $diffMonths = (int)abs(($startDate - $finishDate)/(60*60*24*30)); //roughly close, as there is not always 30 days in a month
+                        if ($diffMonths === 0) {
+                           $diffMonths = 1;
+                        }  
+                        $monthlyValue = $projectValue/$diffMonths;
+                    }
+                } else if ($customField['id'] == 'IEAAFWIKJUAAXA47') { //monthly value for retainers
+                    $monthlyValue = $customField['value'];
                 }
             } 
 
@@ -214,10 +238,11 @@ class LandingController extends BaseController
             $projects[] = [
                 'id'=>$folder['id'],
                 'css'=>$css,
-                'value'=>$folder['title'].' : '.$phase,
+                'value'=>$folder['title'].' <br> '.$phase . ' : ' . round($monthlyValue),
                 'phase'=>$phase, 
-                'ownerIds' =>$folder['project']['ownerIds'],
-                'link' => $folder['permalink']
+                'ownerIds'=>$folder['project']['ownerIds'],
+                'link'=>$folder['permalink'],
+                'monthlyValue'=>$monthlyValue
             ];
         }
 
@@ -229,19 +254,29 @@ class LandingController extends BaseController
         array_multisort($sort['phase'], SORT_ASC, $projects);
 
 
-        //now lets loop through the tasks and add these to the user object
+        //now lets loop through the projects and add these to the user object
         foreach ($projects as $project) {
             if (array_key_exists('ownerIds', $project)) {
                 foreach ($project['ownerIds'] as $ownerId) {
                     if (array_key_exists($ownerId, $tree['leaves'])) {
-						$css = $project['css'];
+                        $css = $project['css'];
+
+                        if (!isset($tree['leaves'][$ownerId]['monthlyValue'])) {
+                            $totalMonthlyValue = 0;
+                        } else {
+                            $totalMonthlyValue = $tree['leaves'][$ownerId]['monthlyValue'];
+                        }
+                        if ($project['monthlyValue'] != null) {
+                            $totalMonthlyValue = $project['monthlyValue'] + $tree['leaves'][$ownerId]['monthlyValue'];
+                        } 
 
 						//add to the tree
                         $tree['leaves'][$ownerId]['value'][] = [
 							'css'=>$css,
 							'value'=>$project['value'],
-							'link'=>$project['link']
-						];
+                            'link'=>$project['link']
+                        ];
+                        $tree['leaves'][$ownerId]['monthlyValue'] = $totalMonthlyValue; 
                     } else {
                         Log::error('Project for non existent user id : '.$ownerId);
                     }
@@ -250,13 +285,14 @@ class LandingController extends BaseController
         }
 
 
-        //prune the zeros, add the number of projects to the header and optionally add some styling one day
+        //prune the zeroes, add the number of projects to the header
         foreach ($tree['leaves'] as $key => $leaf) {
             if (empty($leaf['value'])) {
                 unset($tree['leaves'][$key]);
             } else {
                 $tree['leaves'][$key]['numberOfProjects'] .= count($tree['leaves'][$key]['value']);
                 $tree['leaves'][$key]['key'] .= ' (' .count($tree['leaves'][$key]['value']) . ')';
+                $tree['leaves'][$key]['subtitle'] = number_format($tree['leaves'][$key]['monthlyValue']);
             }
         }
 

@@ -41,13 +41,16 @@
 							<div class="row">
 								@foreach ($tree['leaves'] as $leaf)
 								<div class="leaf {{ $tree['css'] }} {{ $leaf['css'] }}"  onclick="$(this).toggleClass('scroll')">
-									<p class="key" title="{{ $leaf['key'] }}">{{ $leaf['key'] }}</p>
+									<p class="key" title="{{ $leaf['key'] }}">{!! $leaf['key'] !!}</p>
+									@if (isset($leaf['subtitle']) && !is_array($leaf['subtitle']))
+								        <p class="subtitle" title="{{ $leaf['subtitle'] }}">{!! $leaf['subtitle'] !!}</p>
+                                	@endif
 									@if (!is_array($leaf['value']))
-								        <p class="value" title="{{ $leaf['value'] }}">{{ $leaf['value'] }}</p>
+								        <p class="value" title="{{ $leaf['value'] }}">{!! $leaf['value'] !!}</p>
                                 	@else
 									<p class="value multiple">
 										@foreach ($leaf['value'] as $v)
-										<span class="{{$v['css']}}">{{$v['value']}}</span>
+										<span class="{{$v['css']}}">{!! $v['value'] !!}</span>
 										@endforeach
 									</p>
 									@endif

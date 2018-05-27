@@ -178,6 +178,11 @@ body {
 	overflow:scroll;
 }
 
+.leaf .subtitle {
+	font-weight:bold;
+	color:#777;
+}
+
 .leaf .value span {
 	display:block;
 	padding-top:5px;
