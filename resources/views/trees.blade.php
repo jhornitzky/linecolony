@@ -20,7 +20,6 @@
 							<a href="/">Hours</a>
 							<a href="/projects">Status</a>
 							<a href="/owners">Owners</a>
-							<!--<a href="/retainers">Retainers</a>-->
 							<a href="/overdue">Overdue</a>
 						</span>
 					</div>

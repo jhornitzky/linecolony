@@ -69,9 +69,6 @@ class LandingController extends BaseController
         $time = date('d-M H:i');
         $trees = [];
 
-      	//fetch reusable wrike data
-      	$contacts = $client->get_contacts();
-
       	//fetch data and collect into trees
       	$trees[] = $this->getProjectStatus($client);
       	$trees[] = $this->getRetainers($client);
@@ -112,6 +109,21 @@ class LandingController extends BaseController
 
         //fetch data and collect into trees
 		$trees[] = $this->getProjectOwners($contacts, $client);
+
+      	return view('trees', ['trees' => $trees, 'time' => $time]);
+    }
+
+     public function retainers(Request $request) {
+        $response = $this->processLogin($request);
+        if (!($response instanceof Wrike)) return $response;
+        $client = $response;
+
+        //setup vars
+        $time = date('d-M H:i');
+        $trees = [];
+
+        //fetch data and collect into trees
+      	$trees[] = $this->getRetainersWithTimes($client);
 
       	return view('trees', ['trees' => $trees, 'time' => $time]);
     }
@@ -384,7 +396,6 @@ class LandingController extends BaseController
 
         return $tree;
     }
-
     
     private function getRetainers($client) {
 		$tree = [
@@ -394,8 +405,8 @@ class LandingController extends BaseController
 		  'css' => 'col-md-2',
         ];
 
+        //load projects fiest
 		$folderTree = $client->get_folder_tree();
-        //dd($folderTree);
         $projectIds = [];
         foreach ($folderTree as $folder) {
             if (array_key_exists('project', $folder)) {
@@ -434,12 +445,21 @@ class LandingController extends BaseController
 
                 //find phase
                 $phase = null;
+                $targetHoursPerMonth = null;
                 foreach($folder['customFields'] as $customField) {
                     if ($customField['id'] == 'IEAAFWIKJUAARM2Z') { //FIXME phase set manually
                         $phase = $customField['value'];
+                    } else if($customField['id'] == 'IEAAFWIKJUAAT67D') { //FIXME target set manually
+                        $targetHoursPerMonth = $customField['value'];
                     }
                 } 
-                if ($phase == '08 Retainer') { //include retainers
+                if ($phase == '08 Retainer') { //include retainers only
+                    $projects[] = [
+                        'id'=>$folder['id'],
+                        'title'=>$folder['title'],
+                        'targetHoursPerMonth'=>$targetHoursPerMonth
+                    ];
+                    /*
                     $tree['leaves'][] = [
                         'key' => $folder['title'],
                         'link' => 'https://www.wrike.com/workspace.htm#path=folder&id='.$folder['id'],
@@ -447,17 +467,22 @@ class LandingController extends BaseController
                         'css' => $css,
                         'priority' => $priority
                     ];
+                    */
                 }
             }
         }
 
+        $tree = $this->getRetainerHoursByFolder($projects,$client);
+
         //sort based on priority
+        /*
         $sort = array();
         foreach($tree['leaves'] as $k=>$v) {
             $sort['priority'][$k] = $v['priority'];
             $sort['key'][$k] = $v['key'];
         }
         array_multisort($sort['priority'], SORT_ASC, $sort['key'], SORT_ASC,$tree['leaves']);
+        */
 
         //set number of projects
 		$tree['titleKey'] = 'Retainers ('.count($tree['leaves']).')';
@@ -717,17 +742,19 @@ class LandingController extends BaseController
                 $total += $log['hours'];
             }
             $css = '';
-            if (isset($folder['target']) && $total < $folder['target'] * 0.5) {
+            if (isset($folder['targetHoursPerMonth']) && $total < $folder['targetHoursPerMonth'] * 0.5) {
                 $css = 'red';
-            } elseif (isset($folder['target']) && $total > $folder['target'] * 0.5 && $total < $folder['target']) {
+            } elseif (isset($folder['targetHoursPerMonth']) && $total > $folder['targetHoursPerMonth'] * 0.5 && $total < $folder['targetHoursPerMonth']) {
                 $css = 'amber';
-            } elseif (isset($folder['target'])) {
+            } elseif (isset($folder['targetHoursPerMonth'])) {
                 $css = 'green';
             }
 
+            $targetText = (isset($folder['targetHoursPerMonth']) && $folder['targetHoursPerMonth'] > 0) ? $folder['targetHoursPerMonth'] : '-';
+
             $tree['leaves'][] = [
                 'key' => $folder['title'],
-                'value' => round($total),
+                'value' => round($total) . ' / ' . $targetText,
                 'css' => $css,
             ];
         }
