@@ -485,7 +485,7 @@ class LandingController extends BaseController
         */
 
         //set number of projects
-		$tree['titleKey'] = 'Retainers ('.count($tree['leaves']).')';
+		$tree['titleKey'] = 'Retainers this month ('.count($tree['leaves']).')';
 
         return $tree;
 	}
@@ -742,12 +742,14 @@ class LandingController extends BaseController
                 $total += $log['hours'];
             }
             $css = '';
-            if (isset($folder['targetHoursPerMonth']) && $total < $folder['targetHoursPerMonth'] * 0.5) {
-                $css = 'red';
-            } elseif (isset($folder['targetHoursPerMonth']) && $total > $folder['targetHoursPerMonth'] * 0.5 && $total < $folder['targetHoursPerMonth']) {
+            if (isset($folder['targetHoursPerMonth']) && $folder['targetHoursPerMonth'] != 0 && $total <= $folder['targetHoursPerMonth'] * 0.95) {
                 $css = 'amber';
-            } elseif (isset($folder['targetHoursPerMonth'])) {
+            } elseif (isset($folder['targetHoursPerMonth']) && $folder['targetHoursPerMonth'] != 0 && $total > $folder['targetHoursPerMonth'] * 0.95 && $total < $folder['targetHoursPerMonth'] * 1.05) {
                 $css = 'green';
+            } elseif (isset($folder['targetHoursPerMonth']) && $folder['targetHoursPerMonth'] != 0 && $total >= $folder['targetHoursPerMonth'] * 1.05) {
+                $css = 'red';
+            } else {
+                $css = 'grey';
             }
 
             $targetText = (isset($folder['targetHoursPerMonth']) && $folder['targetHoursPerMonth'] > 0) ? $folder['targetHoursPerMonth'] : '-';
